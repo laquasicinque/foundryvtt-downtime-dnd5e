@@ -1,5 +1,9 @@
-/* Control Buttons Container */
-:is(.dnd5e.sheet, .tidy5e.sheet, .sheet[data-sheet-module="tidy5e-sheet"]) .downtime-dnd5e .downtime-dnd5e-controls {
+Control
+    Buttons
+    Container
+    :is(.dnd5e.sheet, .tidy5e.sheet, .sheet[data-sheet-module="tidy5e-sheet"])
+    .downtime-dnd5e
+    .downtime-dnd5e-controls {
     display: flex;
     justify-content: flex-end;
     margin: 4px 0;
