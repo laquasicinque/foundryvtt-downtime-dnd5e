@@ -1,5 +1,6 @@
-import { every, some } from '.'
-import { TupleExcludingFirst, TupleFirst } from '../types'
+import { every } from './every'
+import { some } from './some'
+import { TupleExcludingFirst, TupleFirst } from '../../types'
 
 type ZipOutput<T extends readonly unknown[]> = Iterable<RecursiveZipOutput<T>>
 
@@ -25,15 +26,15 @@ type IterableItem<T> = T extends Iterable<infer Item> ? Item : never
 export function zip(stopOnMin?: boolean): <I extends Iterable<unknown>[]>(iter: I) => ZipOutput<I>
 export function zip<const I extends Iterable<unknown>[]>(iter: I, stopOnMin?: boolean): ZipOutput<I>
 export function zip<I extends Iterable<unknown>[]>(
-  stopOnMinOrIter?: boolean | I,
-  maybeStopOnMin?: boolean
+    stopOnMinOrIter?: boolean | I,
+    maybeStopOnMin?: boolean
 ): ZipOutput<I> | (<I extends Iterable<unknown>[]>(iter: I) => ZipOutput<I>) {
-  if (Array.isArray(stopOnMinOrIter)) {
-    // Direct form: zip the iterables
-    return _zip(stopOnMinOrIter, maybeStopOnMin) as ZipOutput<I>
-  }
-  // Curried form: return a function that takes iterables
-  return <I extends Iterable<unknown>[]>(iter: I) => _zip(iter, stopOnMinOrIter) as ZipOutput<I>
+    if (Array.isArray(stopOnMinOrIter)) {
+        // Direct form: zip the iterables
+        return _zip(stopOnMinOrIter, maybeStopOnMin) as ZipOutput<I>
+    }
+    // Curried form: return a function that takes iterables
+    return <I extends Iterable<unknown>[]>(iter: I) => _zip(iter, stopOnMinOrIter) as ZipOutput<I>
 }
 
 /**

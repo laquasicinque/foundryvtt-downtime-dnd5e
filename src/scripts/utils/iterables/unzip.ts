@@ -1,4 +1,4 @@
-import { TupleFirst, TupleExcludingFirst } from "../types"
+import { TupleFirst, TupleExcludingFirst } from "../../types"
 
 export type UnzipOutput<T extends readonly unknown[]> = RecursiveUnzipOutput<T>
 

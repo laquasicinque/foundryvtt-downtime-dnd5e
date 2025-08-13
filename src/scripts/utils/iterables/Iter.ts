@@ -4,7 +4,7 @@ import { entries } from './entries'
 import { every } from './every'
 import { filter } from './filter'
 import { first } from './first'
-import { flat } from './flat'
+import { flat, FlatItem } from './flat'
 import { gen } from './gen'
 import { join } from './join'
 import { last } from './last'
@@ -63,7 +63,7 @@ export class Iter<T> implements Iterable<T> {
     }
 
     flat<Depth extends number = 1>(depth?: Depth) {
-        return new Iter(flat(this.#value as any, depth ?? 1)) as Iter<FlatArray<T[], Depth>>
+        return new Iter(flat(this.#value as any, depth ?? 1)) as Iter<FlatItem<T, Depth>>
     }
 
     map<U>(fn: (item: T, index: number) => U) {
@@ -161,4 +161,3 @@ export class Iter<T> implements Iterable<T> {
         return this.#value[Symbol.iterator]()
     }
 }
-window.Iter = Iter

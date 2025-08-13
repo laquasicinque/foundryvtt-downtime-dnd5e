@@ -11,7 +11,7 @@ import { getActor } from "../utils/getActor";
 import { getActorCategories, getWorldCategories } from "../utils/categories";
 import { getActorActivities, getActorActivitiesMap, getWorldActivities, getWorldActivitiesMap, setActorActivities, setWorldActivities } from "../utils/activities";
 import WorldActivityButtons from "./WorldActivityButtons.vue";
-import { map } from "../utils/map";
+import { map } from "../utils/iterables/map";
 import { clamp } from "../utils/clamp";
 
 const { sheet } = inject("sheet") as { sheet: { actor: dnd5e.documents.Actor5e; render(bool: boolean): void } };
