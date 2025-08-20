@@ -18,8 +18,6 @@ import { createApp, h, markRaw, reactive, readonly, ref, render, toRefs } from "
 import SheetContent from "./scripts/partial/SheetContent.vue";
 import { SheetKey } from "./scripts/composables/useSheet.js";
 
-console.log("%cHello from Downtime", "font-size: 46px;")
-
 /* ------------------------------------ */
 /* Initialize module					*/
 /* ------------------------------------ */

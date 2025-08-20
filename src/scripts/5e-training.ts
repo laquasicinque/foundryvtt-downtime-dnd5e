@@ -24,7 +24,6 @@ export const initHooks = () => {
     registerHelpers();
 };
 
-type AnyFn = (...args: any[]) => any
 
 export const setupHooks = () => {
     // Logger.warn("Setup Hooks processing");
@@ -267,7 +266,7 @@ Hooks.on(`renderActorSheetV2`, (app: Downtime.ActorSheetApplication, html: JQuer
         app.setPosition(newPos);
     }
     addTrainingTab(app, html, data).then(function () {
-            if (app.activateTrainingTab) {
+        if (app.activateTrainingTab) {
             app._tabs[0].activate("training");
         }
     });
