@@ -5,10 +5,13 @@
   import DndTableRow from "../components/DndTableRow.svelte";
   import DndProgress from "../components/DndProgress.svelte";
   import { localize } from "../utils/localize";
+  import { TrackingAndTraining } from "../TrackingAndTraining";
 
   type ActivitiesTableProps = {
     category: Downtime.CategoryWithActivities;
     categoryControls?: boolean;
+    actor?: dnd5e.documents.Actor5e<'character'>
+    isEditMode?: boolean;
 
     onEditCategory: (categoryId: string) => void;
     onDeleteCategory: (categoryId: string) => void;
@@ -28,12 +31,13 @@
     onEditActivity,
     onDeleteActivity,
     onRollActivity,
+    actor,
     onSetProgress,
     onMoveActivityUp,
     onMoveActivityDown,
+    isEditMode = false,
   }: ActivitiesTableProps = $props();
 
-  let isEditMode = $state(false);
   const isGm = $state(game.users.current?.isGM ?? false);
 
   const columns: Column[] = $derived(
@@ -45,7 +49,10 @@
     ].filter((x) => x != null)
   );
 
-  const primaryCellClicked = (event: MouseEvent, activity: Downtime.TrackedItem) => {
+  const primaryCellClicked = (
+    event: MouseEvent,
+    activity: Downtime.TrackedItem
+  ) => {
     event.preventDefault();
     if (!isEditMode) onRollActivity(activity.id);
   };
@@ -54,7 +61,30 @@
   const deleteCategory = (categoryId: string) => onDeleteCategory(categoryId);
   const editActivity = (itemId: string) => onEditActivity(itemId);
   const deleteActivity = (itemId: string) => onDeleteActivity(itemId);
-  const setProgress = (id: string, progress: number) => onSetProgress({ id, progress });
+  const setProgress = (id: string, progress: number) =>
+    onSetProgress({ id, progress });
+
+  function onDragStart(event: DragEvent, activity: Downtime.TrackedItem) {
+    if (event.target !== event.currentTarget) {
+      // Allow for draggables within this containing element to be handled elsewhere.
+      return;
+    }
+
+    const dragData = { type: "downtime-activity", activity, actor: actor?.uuid };
+    event.dataTransfer?.setData("text/plain", JSON.stringify(dragData));
+  }
+  function onDrop(event: DragEvent, activity: Downtime.TrackedItem) {
+    const payload = foundry.applications.ux.TextEditor.getDragEventData(event) as { type: string, activity: {id: string}, actor: string};
+    if (payload.type !== 'downtime-activity')
+    console.log({ payload, category: activity.category, activity });
+    // TrackingAndTraining.moveActivity()
+    TrackingAndTraining.moveActivity({
+        sourceId: payload.activity.id,
+        targetId: activity.id,
+        targetActorId: actor?.uuid,
+        sourceActorId: payload.actor
+    })
+  }
 </script>
 
 <DndTable name={category.name} {columns}>
@@ -81,7 +111,11 @@
     {/if}
   {/snippet}
   {#each category.activities as activity}
-    <DndTableRow>
+    <DndTableRow
+      draggable={true}
+      ondragstart={(e) => onDragStart(e, activity)}
+      ondrop={(e) => onDrop(e, activity)}
+    >
       <DndTablePrimaryCell
         onclick={(event) => primaryCellClicked(event, activity)}
         title={activity.name}
@@ -101,7 +135,11 @@
               style="width: 2.5rem"
               type="number"
               bind:value={activity.progress}
-              onchange={(e) => setProgress(activity.id, (e.target as HTMLInputElement).valueAsNumber)}
+              onchange={(e) =>
+                setProgress(
+                  activity.id,
+                  (e.target as HTMLInputElement).valueAsNumber
+                )}
             />
           {:else}
             {activity.progress}
@@ -112,7 +150,8 @@
       {/snippet}
       {#snippet cell__progress({ column })}
         <DndTableCell {column}>
-          <DndProgress value={activity.progress} max={activity.completionAt}></DndProgress>
+          <DndProgress value={activity.progress} max={activity.completionAt}
+          ></DndProgress>
         </DndTableCell>
       {/snippet}
       {#snippet cell__controls({ column })}

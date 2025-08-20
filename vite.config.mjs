@@ -75,7 +75,7 @@ export default () => {
                 fileName: "module",
             },
             rollupOptions: {
-                external: ["pixi.js"], // Prevent bundling PIXI.js
+                external: ["pixi.js", "tidy5e-sheet"], // Prevent bundling PIXI.js
             },
         },
 

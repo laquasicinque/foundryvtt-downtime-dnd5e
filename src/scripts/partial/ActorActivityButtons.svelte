@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { getContext } from "svelte";
+  import { getContext, getAllContexts } from "svelte";
   import type { Snippet } from "svelte";
-  import TrackingAndTraining from "../TrackingAndTraining";
+  import { TrackingAndTraining } from "../TrackingAndTraining";
   import { localize } from "../utils/localize";
   import AuditLogApp from "../apps/AuditLogApp.js";
   import { preventDefault } from "../utils/preventDefault";
@@ -9,31 +9,28 @@
   type ActorActivityButtonsProps = {
     showImportButton: boolean;
     children?: Snippet;
+    actor: dnd5e.documents.Actor5e
   };
 
-  let { showImportButton, children }: ActorActivityButtonsProps = $props();
+  let { showImportButton,children, actor }: ActorActivityButtonsProps = $props();
 
-  const { sheet } = getContext("sheet");
-  let actorTools = TrackingAndTraining.getActorTools(sheet.actor.id);
-  const ABILITIES = TrackingAndTraining.formatAbilitiesForDropdown();
-  const SKILLS = TrackingAndTraining.formatSkillsForDropdown();
-  const dropdownOptions = { abilities: ABILITIES, skills: SKILLS, tools: actorTools } as Downtime.DropdownOptions;
+  const dropdownOptions = TrackingAndTraining.getDowntimeDropdownOptions(actor.uuid)
 
   function exportTrackedItems() {
-    return TrackingAndTraining.exportItems(sheet.actor.id);
+    return TrackingAndTraining.exportItems(actor.id!);
   }
   function importTrackedItems() {
-    return TrackingAndTraining.importItems(sheet.actor.id);
+    return TrackingAndTraining.importItems(actor.id!);
   }
 
   function openChangeLog() {
-    new AuditLogApp({ actor: sheet.actor }).render({ force: true });
+    new AuditLogApp({ actor: actor as any }).render({ force: true });
   }
   async function addCategory() {
-    await TrackingAndTraining.addCategory(sheet.actor.id);
+    await TrackingAndTraining.addCategory(actor.id!);
   }
   async function addItem() {
-    await TrackingAndTraining.addItem(sheet.actor.id, dropdownOptions);
+    await TrackingAndTraining.addItem(actor.id!, dropdownOptions);
   }
 </script>
 
@@ -77,7 +74,7 @@
       title={localize("downtime-dnd5e.CreateNewCategory")}
       onclick={preventDefault(addCategory)}
     >
-      <i class="fas fa-list"></i>
+      <i class="fas fa-folder-plus"></i>
       {localize("downtime-dnd5e.AddCategory")}
     </button>
     <button

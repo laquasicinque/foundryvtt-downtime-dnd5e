@@ -1,25 +1,25 @@
 <script lang="ts">
   import { getContext } from "svelte";
   import type { Snippet } from "svelte";
-  import TrackingAndTraining from "../TrackingAndTraining";
+  import { TrackingAndTraining } from "../TrackingAndTraining";
   import { localize } from "../utils/localize";
   import { preventDefault } from "../utils/preventDefault";
 
   type WorldActivityButtonsProps = {
+    actor: dnd5e.documents.Actor5e
     children?: Snippet;
   };
 
-  let { children }: WorldActivityButtonsProps = $props();
+  let { actor, children }: WorldActivityButtonsProps = $props();
 
-  const { sheet } = getContext("sheet");
 
-  const dropdownOptions = TrackingAndTraining.getDowntimeDropdownOptions(sheet.actor.id);
+  const dropdownOptions = TrackingAndTraining.getDowntimeDropdownOptions(actor.id!);
 
   async function addCategory() {
-    await TrackingAndTraining.addCategory(sheet.actor.id, true);
+    await TrackingAndTraining.addCategory(actor.id!, true);
   }
   async function addItem() {
-    await TrackingAndTraining.addItem(sheet.actor.id, dropdownOptions, true);
+    await TrackingAndTraining.addItem(actor.id!, dropdownOptions, true);
   }
 </script>
 

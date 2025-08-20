@@ -1,6 +1,6 @@
 import type { DeepPartial } from "../types";
 import { createTrackedItem } from "../TrackedItem.js";
-import TrackingAndTraining from "../TrackingAndTraining.js";
+import { TrackingAndTraining } from "../TrackingAndTraining.js";
 import CONSTANTS from "../constants.js";
 import TrackedItemAppComponent from "./TrackedItemApp.svelte";
 import { localize } from "../utils/localize.js";

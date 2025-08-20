@@ -1,4 +1,4 @@
-import TrackingAndTraining from "../TrackingAndTraining.js";
+import { TrackingAndTraining } from "../TrackingAndTraining.js";
 
 /* MIGRATION #1 (implemented in version 0.6.0)
 - Add id's to items and log entries

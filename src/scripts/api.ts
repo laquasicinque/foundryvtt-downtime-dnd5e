@@ -1,5 +1,4 @@
-import TrackingAndTraining from "./TrackingAndTraining.js";
-import CONSTANTS from "./constants.js";
+import { TrackingAndTraining } from "./TrackingAndTraining.js";
 import { RetrieveHelpers } from "./lib/retrieve-helpers.js";
 import { getUserCharacter, isRealNumber } from "./lib/lib.js";
 import { Logger } from './lib/Logger.js'
@@ -72,7 +71,7 @@ const API = {
      * @param {Actor|string} actor
      * @returns {Activity[]}
      */
-    getActivitiesForActor(actor: dnd5e.documents.Actor5e | string) {
+    getActivitiesForActor(actor: Downtime.ActorResolvable) {
         return this.getActivities(actor);
     },
 
@@ -80,7 +79,7 @@ const API = {
      * @param {Actor|string} actor
      * @returns {Activity[]}
      */
-    getActivities(actor: dnd5e.documents.Actor5e | string) {
+    getActivities(actor: Downtime.ActorResolvable) {
         const actorTmp = RetrieveHelpers.getActorSync(actor, false, false);
         if (actorTmp) {
             return getActorActivities(actorTmp);
