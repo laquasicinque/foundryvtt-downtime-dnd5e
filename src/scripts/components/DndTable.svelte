@@ -14,7 +14,7 @@
 </script>
 
 <script lang="ts">
-  import { TableInjectionKey, type MaybeGetter } from "../types";
+  import { type MaybeGetter } from "../types";
   import { toValue } from "../utils/toValue";
   import { setContext, type Snippet } from "svelte";
 
@@ -42,7 +42,7 @@
 
   const columnsById = $derived(new Map(columns.map((column) => [column.id, column])));
 
-  setContext(TableInjectionKey, { columns: () => columns, columnsById: () => columnsById, name: () => name });
+  setContext("table", { columns: () => columns, columnsById: () => columnsById, name: () => name });
 </script>
 
 <div class="items-section card">

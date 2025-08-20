@@ -1,6 +1,6 @@
 <script lang="ts">
   import { getContext, type Snippet } from "svelte";
-  import { type TableContextValue, TableInjectionKey, type MaybeGetter } from "../types";
+  import { type TableContextValue, type MaybeGetter } from "../types";
   import type { ColumnNormalized } from "./DndTable.svelte";
 
   type DndTableRow = {
@@ -10,7 +10,7 @@
 
   let { children, ...props }: DndTableRow = $props();
 
-  const { columnsById } = getContext<TableContextValue>(TableInjectionKey);
+  const { columnsById } = getContext<TableContextValue>("table");
 </script>
 
 <li class="item">
