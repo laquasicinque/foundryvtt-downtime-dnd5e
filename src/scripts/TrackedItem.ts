@@ -1,12 +1,6 @@
-import { PrettifyType, RequiredProps, UnionToIntersection } from "fvtt-types/utils";
 import CONSTANTS from "./constants.js";
+import type { OnlySelectedPartial, UnionSameKeys } from "./types.js";
 import { localize } from "./utils/localize.js";
-
-type UnionSameKeys<T> = keyof T;
-
-type OnlySelectedPartial<T, K extends keyof T> = T extends unknown
-  ? Prettify<Partial<Pick<T, K>> & Required<Omit<T, K>>>
-  : never;
 
 export function createTrackedItem<T extends Downtime.TrackedItem>(
   options: OnlySelectedPartial<T, UnionSameKeys<T>>,

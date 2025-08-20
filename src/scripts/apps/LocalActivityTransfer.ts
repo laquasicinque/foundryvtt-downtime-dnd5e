@@ -1,6 +1,6 @@
-import { DeepPartial } from "fvtt-types/utils";
 import CONSTANTS from "../constants";
 import Logger from "../lib/Logger";
+import type { DeepPartial } from "../types";
 
 export class LocalActivityTransferApplication extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.api.ApplicationV2) {
     static DEFAULT_OPTIONS = {

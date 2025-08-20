@@ -2,12 +2,10 @@
  * An attempt to combine vue reactivity with the sheet shenanigans
  */
 
-import { inject, InjectionKey, readonly, Ref, toRefs } from "vue";
+import { getContext } from "svelte";
 
-export const SheetKey = Symbol() as InjectionKey<{
-    isEditMode: Readonly<Ref<boolean>>
-}>
+export const SheetKey = Symbol();
 
 export function useSheet() {
-    return inject(SheetKey)!
+  return getContext("sheet")!;
 }

@@ -1,13 +1,15 @@
 {
+  "extends": "@tsconfig/svelte/tsconfig.json",
   "compilerOptions": {
     "allowJs": true,
-    "types": ["fvtt-types","dnd5e/dnd5e/dnd5e.d.mts"],
-    "target":"esnext",
+    "types": ["fvtt-types", "dnd5e/dnd5e/dnd5e.d.mts", "svelte"],
+    "target": "esnext",
     "module": "esnext",
     "moduleResolution": "bundler",
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "strictNullChecks": true,
-    "strict":true
-  }
+    "strict": true
+  },
+  "include": ["src/**/*"]
 }

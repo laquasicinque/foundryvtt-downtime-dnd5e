@@ -1,4 +1,4 @@
-import { DeepPartial } from "fvtt-types/utils"
+import type { DeepPartial } from "../types"
 import Logger from "../lib/Logger"
 import CONSTANTS from "../constants"
 import { localize } from "../utils/localize"

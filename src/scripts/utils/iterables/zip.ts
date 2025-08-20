@@ -1,19 +1,16 @@
-import { every } from './every'
-import { some } from './some'
-import { TupleExcludingFirst, TupleFirst } from '../../types'
+import { every } from "./every";
+import { some } from "./some";
+import type { TupleExcludingFirst, TupleFirst } from "../../types";
 
-type ZipOutput<T extends readonly unknown[]> = Iterable<RecursiveZipOutput<T>>
+type ZipOutput<T extends readonly unknown[]> = Iterable<RecursiveZipOutput<T>>;
 
-type RecursiveZipOutput<
-    Input extends readonly unknown[],
-    Output extends readonly unknown[] = [],
-> = Input extends []
-    ? Output
-    : TupleFirst<Input> extends infer K
+type RecursiveZipOutput<Input extends readonly unknown[], Output extends readonly unknown[] = []> = Input extends []
+  ? Output
+  : TupleFirst<Input> extends infer K
     ? RecursiveZipOutput<TupleExcludingFirst<Input>, [...Output, IterableItem<K>]>
-    : never
+    : never;
 
-type IterableItem<T> = T extends Iterable<infer Item> ? Item : never
+type IterableItem<T> = T extends Iterable<infer Item> ? Item : never;
 
 /**
  * Combines multiple iterables into tuples by index position.
@@ -23,18 +20,18 @@ type IterableItem<T> = T extends Iterable<infer Item> ? Item : never
  * [...zip(true)([[1,2,3], ['a','b']])] // [[1,'a'], [2,'b']]
  * ```
  */
-export function zip(stopOnMin?: boolean): <I extends Iterable<unknown>[]>(iter: I) => ZipOutput<I>
-export function zip<const I extends Iterable<unknown>[]>(iter: I, stopOnMin?: boolean): ZipOutput<I>
+export function zip(stopOnMin?: boolean): <I extends Iterable<unknown>[]>(iter: I) => ZipOutput<I>;
+export function zip<const I extends Iterable<unknown>[]>(iter: I, stopOnMin?: boolean): ZipOutput<I>;
 export function zip<I extends Iterable<unknown>[]>(
-    stopOnMinOrIter?: boolean | I,
-    maybeStopOnMin?: boolean
+  stopOnMinOrIter?: boolean | I,
+  maybeStopOnMin?: boolean,
 ): ZipOutput<I> | (<I extends Iterable<unknown>[]>(iter: I) => ZipOutput<I>) {
-    if (Array.isArray(stopOnMinOrIter)) {
-        // Direct form: zip the iterables
-        return _zip(stopOnMinOrIter, maybeStopOnMin) as ZipOutput<I>
-    }
-    // Curried form: return a function that takes iterables
-    return <I extends Iterable<unknown>[]>(iter: I) => _zip(iter, stopOnMinOrIter) as ZipOutput<I>
+  if (Array.isArray(stopOnMinOrIter)) {
+    // Direct form: zip the iterables
+    return _zip(stopOnMinOrIter, maybeStopOnMin) as ZipOutput<I>;
+  }
+  // Curried form: return a function that takes iterables
+  return <I extends Iterable<unknown>[]>(iter: I) => _zip(iter, stopOnMinOrIter) as ZipOutput<I>;
 }
 
 /**
@@ -57,16 +54,16 @@ export function zip<I extends Iterable<unknown>[]>(
  * ```
  */
 function* _zip<T>(iters: Iterable<T>[], stopOnMin?: boolean): IterableIterator<T[]> {
-    const iterators = iters.map((iter) => iter[Symbol.iterator]())
+  const iterators = iters.map((iter) => iter[Symbol.iterator]());
 
-    const items = iterators.map((iter) => iter.next())
-    const limitFn = stopOnMin ? every : some
+  const items = iterators.map((iter) => iter.next());
+  const limitFn = stopOnMin ? every : some;
 
-    while (limitFn(items, (item: IteratorResult<T>) => !item.done)) {
-        yield items.map((item) => item.value as T)
+  while (limitFn(items, (item: IteratorResult<T>) => !item.done)) {
+    yield items.map((item) => item.value as T);
 
-        for (let i = 0; i < items.length; i++) {
-            items[i] = iterators[i].next()
-        }
+    for (let i = 0; i < items.length; i++) {
+      items[i] = iterators[i].next();
     }
+  }
 }

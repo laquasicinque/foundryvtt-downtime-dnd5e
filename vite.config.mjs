@@ -1,7 +1,7 @@
-import vue from "@vitejs/plugin-vue";
 import cleanPlugin from "vite-plugin-clean";
 import { normalizePath } from "vite";
 import path from "path";
+import { svelte } from "@sveltejs/vite-plugin-svelte";
 
 // For convenience, you just need to modify the package ID below as it is used to fill in default proxy settings for
 // the dev server.
@@ -86,15 +86,6 @@ export default () => {
             },
         },
 
-        plugins: [
-            vue({
-                template: {
-                    compilerOptions: {
-                        isCustomElement: (tag) => tag.includes("-"),
-                    },
-                },
-            }),
-            cleanPlugin(),
-        ],
+        plugins: [svelte({ configFile: "../svelte.config.ts" }), cleanPlugin()],
     };
 };
