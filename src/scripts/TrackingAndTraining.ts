@@ -10,9 +10,9 @@ import { localize } from "./utils/localize.js";
 import { getActorCategories, getWorldCategories, setActorCategories, setWorldCategories } from "./utils/categories.js";
 import { getActorActivities, getWorldActivities, setActorActivities, setWorldActivities } from "./utils/activities.js";
 import { getActor } from "./utils/getActor.js";
-import { pluck } from "./utils/pluck.js";
-import { sum } from "./utils/sum.js";
-import { filter } from "./utils/filter.js";
+import { pluck } from "./utils/iterables/pluck.js";
+import { sum } from "./utils/iterables/sum.js";
+import { filter } from "./utils/iterables/filter.js";
 
 const { DialogV2 } = foundry.applications.api
 

@@ -1,12 +1,10 @@
 import { DeepPartial } from "fvtt-types/utils";
-import CONSTANTS from "../constants.js";
 import { getActorActivities, setActorActivities } from "../utils/activities.js";
 import { getActor } from "../utils/getActor.js";
 import { VueApplicationMixin } from "../utils/VueApplicationMixin.js";
 import AuditLogAppComponent from "./AuditLogApp.vue";
 import { localize } from "../utils/localize.js";
-import { apply } from "../utils/pipe.js";
-import { Iter } from "../utils/index.js";
+import { Iter } from "../utils/iterables/Iter.js";
 
 export default class AuditLogApp extends VueApplicationMixin(foundry.applications.api.ApplicationV2) {
     public actor: dnd5e.documents.Actor5e;
@@ -25,7 +23,7 @@ export default class AuditLogApp extends VueApplicationMixin(foundry.application
         id: "downtime-audit-log-app",
         wrapper: {
             tag: 'form',
-            class: 'standard-form'
+            class: 'standard-form downtime-dnd5e-audit-log-form'
         },
         form: {
             closeOnSubmit: true,
@@ -34,6 +32,15 @@ export default class AuditLogApp extends VueApplicationMixin(foundry.application
             title: "downtime-dnd5e.ChangeLog",
             resizable: true,
         },
+        buttons: [
+            {
+                action: "submit",
+                label: "downtime-dnd5e.DismissSelected",
+                type: "submit",
+                icon: "fas fa-check",
+                disabled: () => !game.users.current?.isGM
+            },
+        ],
         position: {
             width: 1200,
             height: "auto"
