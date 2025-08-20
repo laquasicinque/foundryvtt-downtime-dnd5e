@@ -32,7 +32,7 @@
       title={localize("downtime-dnd5e.CreateNewCategory")}
       onclick={preventDefault(addCategory)}
     >
-      <i class="fas fa-list"></i>
+      <i class="fas fa-folder-plus"></i>
       {localize("downtime-dnd5e.AddWorldCategory")}
     </button>
     <button
@@ -41,7 +41,7 @@
       onclick={preventDefault(addItem)}
       title={localize("downtime-dnd5e.CreateNewItem")}
     >
-      <i class="fas fa-plus"></i>
+      <i class="fas fa-circle-plus"></i>
       {localize("downtime-dnd5e.AddWorldItem")}
     </button>
   </div>

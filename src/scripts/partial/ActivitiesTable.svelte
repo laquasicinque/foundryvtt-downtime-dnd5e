@@ -6,6 +6,7 @@
   import DndProgress from "../components/DndProgress.svelte";
   import { localize } from "../utils/localize";
   import { TrackingAndTraining } from "../TrackingAndTraining";
+  import { SvelteMap } from "svelte/reactivity";
 
   type ActivitiesTableProps = {
     category: Downtime.CategoryWithActivities;
@@ -19,8 +20,9 @@
     onDeleteActivity: (itemId: string) => void;
     onRollActivity: (itemId: string) => void;
     onSetProgress: (payload: { id: string; progress: number }) => void;
-    onMoveActivityUp: (itemId: string) => void;
-    onMoveActivityDown: (itemId: string) => void;
+
+    onDrop: (payload: { event: DragEvent, activity: Downtime.TrackedItem, actor?: string }) => void
+    onDragStart: (payload: { event: DragEvent, activity: Downtime.TrackedItem, actor?: string }) => void
   };
 
   const {
@@ -33,8 +35,8 @@
     onRollActivity,
     actor,
     onSetProgress,
-    onMoveActivityUp,
-    onMoveActivityDown,
+    onDragStart: onDragStartProp,
+    onDrop: onDropProp,
     isEditMode = false,
   }: ActivitiesTableProps = $props();
 
@@ -45,9 +47,17 @@
       { id: "type", label: "Type", width: 80 },
       { id: "override", label: "", width: 100 },
       { id: "progress", label: "Progress", width: 150 },
-      isEditMode ? { id: "controls", label: "", width: 80 } : undefined,
+        { id: "controls", label: "", width: isEditMode ? 40 : 28 },
     ].filter((x) => x != null)
   );
+
+  const expandedMap = new SvelteMap()
+  const toggleExpand = (activity: Downtime.TrackedItem) => {
+    expandedMap.set(activity.id, !expandedMap.get(activity.id))
+  }
+  const isExpanded = (activity: Downtime.TrackedItem) => {
+    return Boolean(expandedMap.get(activity.id))
+  }
 
   const primaryCellClicked = (
     event: MouseEvent,
@@ -64,32 +74,24 @@
   const setProgress = (id: string, progress: number) =>
     onSetProgress({ id, progress });
 
+
   function onDragStart(event: DragEvent, activity: Downtime.TrackedItem) {
     if (event.target !== event.currentTarget) {
-      // Allow for draggables within this containing element to be handled elsewhere.
       return;
     }
+    onDragStartProp({event, activity, actor: actor?.uuid})
 
-    const dragData = { type: "downtime-activity", activity, actor: actor?.uuid };
-    event.dataTransfer?.setData("text/plain", JSON.stringify(dragData));
+
   }
   function onDrop(event: DragEvent, activity: Downtime.TrackedItem) {
-    const payload = foundry.applications.ux.TextEditor.getDragEventData(event) as { type: string, activity: {id: string}, actor: string};
-    if (payload.type !== 'downtime-activity')
-    console.log({ payload, category: activity.category, activity });
-    // TrackingAndTraining.moveActivity()
-    TrackingAndTraining.moveActivity({
-        sourceId: payload.activity.id,
-        targetId: activity.id,
-        targetActorId: actor?.uuid,
-        sourceActorId: payload.actor
-    })
+    onDropProp({event, activity, actor: actor?.uuid})
   }
 </script>
 
+<div>
 <DndTable name={category.name} {columns}>
   {#snippet header__controls()}
-    {#if categoryControls}
+    {#if categoryControls && isEditMode}
       <button
         class="unbutton config-button item-control item-action"
         title={localize("downtime-dnd5e.EditItem")}
@@ -111,8 +113,10 @@
     {/if}
   {/snippet}
   {#each category.activities as activity}
+    {@const expanded = isExpanded(activity)}
     <DndTableRow
       draggable={true}
+      collapsed={!expanded}
       ondragstart={(e) => onDragStart(e, activity)}
       ondrop={(e) => onDrop(e, activity)}
     >
@@ -156,6 +160,7 @@
       {/snippet}
       {#snippet cell__controls({ column })}
         <DndTableCell {column}>
+            {#if isEditMode }
           <button
             type="button"
             id={`downtime-dnd5e-edit-${column.id}`}
@@ -176,43 +181,42 @@
           >
             <i class="fas fa-trash"></i>
           </button>
+          {:else}
           <button
             type="button"
-            id={`downtime-dnd5e-move-${column.id}`}
+            id={`downtime-dnd5e-delete-${column.id}`}
             class="unbutton config-button item-control item-action"
-            data-tid={column.id}
-            title="Move Activity Up"
-            aria-label="Move Activity Up"
-            onclick={() => onMoveActivityUp(activity.id)}
+            title={localize("downtime-dnd5e.DeleteItem")}
+            aria-label={localize("downtime-dnd5e.DeleteItem")}
+            onclick={() => toggleExpand(activity)}
           >
-            <i class="fas fa-chevron-up"></i>
+            <i class="fas" class:fa-expand={!expanded} class:fa-compress={expanded}></i>
           </button>
-          <button
-            type="button"
-            id={`downtime-dnd5e-move-${column.id}`}
-            class="unbutton config-button item-control item-action"
-            data-tid={column.id}
-            title="Move Activity Down"
-            aria-label="Move Activity Down"
-            onclick={() => onMoveActivityDown(activity.id)}
-          >
-            <i class="fas fa-chevron-down"></i>
-          </button>
+          {/if}
         </DndTableCell>
+      {/snippet}
+      {#snippet afterRow()}
+        <p>{activity.description}</p>
       {/snippet}
     </DndTableRow>
   {/each}
 </DndTable>
-
-<style scoped>
-  .item-header .config-button {
+</div>
+<style>
+  div :global(.item-header .config-button) {
     position: relative;
     top: 0;
     left: 0;
     margin: 0 2px;
   }
 
-  .item-controls {
+ div :global(.item-detail.item-controls){
+    padding: 0 8px;
+  }
+
+  div :global(.item-controls .item-control) {
     padding-right: 4px;
+    font-size: var(--font-size-11);
+    color: var(--item-control-interactive-color);
   }
 </style>

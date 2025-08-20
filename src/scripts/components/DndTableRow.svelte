@@ -7,21 +7,27 @@
 
   type DndTableRow = {
     children?: Function;
+    collapsed?: boolean;
     [name: `cell__${string}`]: Snippet<[{ column: ColumnNormalized }]>;
+    afterRow?: Snippet;
   } & HTMLLiAttributes;
 
-  let { children, ...propsAndSnippets }: DndTableRow = $props();
+  let {
+    children,
+    collapsed = true,
+    ...propsAndSnippets
+  }: DndTableRow = $props();
 
   let [snippets, props] = $derived(
     Iter.fromEntries(propsAndSnippets)
-      .partition(([key]) => key.startsWith("cell__"))
+      .partition(([key]) => key.startsWith("cell__") || key === "afterRow")
       .map(Object.fromEntries)
   );
 
   const { columnsById } = getContext<TableContextValue>("table");
 </script>
 
-<li class="item" {...props}>
+<li class="item collapsible" class:collapsed {...props}>
   <div class="item-row">
     {@render children?.()}
     {#each columnsById() as [id, column]}
@@ -33,6 +39,15 @@
       {/if}
     {/each}
   </div>
+  {#if snippets.afterRow}
+    <div class="item-description collapsible-content">
+      <div class="wrapper">
+        <div class="item-summary">
+          {@render snippets.afterRow()}
+        </div>
+      </div>
+    </div>
+  {/if}
 </li>
 
 <style>

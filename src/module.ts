@@ -41,7 +41,11 @@ Hooks.on("renderActorSheetV2", (sheet: Downtime.ActorSheetApplication, form: HTM
 
         sheet[`__${CONSTANTS.MODULE_ID}_INSTANCE__`] = mount(SheetContent, {
             target: mountRoot,
-            context: new Map([["sheet", { sheet, isEditMode: sheet["_mode"] === sheet.constructor.MODES.EDIT }]]),
+            props: {
+                sheet,
+                isEditMode: sheet["_mode"] === sheet.constructor.MODES.EDIT,
+                actor: sheet.actor
+            },
         });
     }
 });

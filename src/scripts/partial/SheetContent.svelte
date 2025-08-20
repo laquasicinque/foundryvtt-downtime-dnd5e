@@ -1,32 +1,24 @@
 <script lang="ts">
-  import { getContext } from "svelte";
-  import type { Snippet } from "svelte";
   import ActorActivityButtons from "./ActorActivityButtons.svelte";
   import CONSTANTS from "../constants";
   import { localize } from "../utils/localize";
   import { TrackingAndTraining } from "../TrackingAndTraining";
-  import { useSheet } from "../composables/useSheet";
   import ActivitiesTable from "./ActivitiesTable.svelte";
   import { pluckId } from "../utils/pluckId";
-  import { getActor } from "../utils/getActor";
   import { getActorCategories, getWorldCategories } from "../utils/categories";
   import {
     getActorActivities,
     getActorActivitiesMap,
     getWorldActivities,
     getWorldActivitiesMap,
-    setActorActivities,
-    setWorldActivities,
   } from "../utils/activities";
   import WorldActivityButtons from "./WorldActivityButtons.svelte";
   import { map } from "../utils/iterables/map";
   import { clamp } from "../utils/clamp";
+  import { preventDefault } from "../utils/preventDefault";
+  import AuditLogApp from "../apps/AuditLogApp.js";
 
-  const { sheet } = getContext("sheet") as {
-    sheet: { actor: dnd5e.documents.Actor5e; render(bool: boolean): void };
-  };
-
-  const actor = getActor(sheet.actor);
+  const { isEditMode, sheet, actor } = $props();
 
   const dropdownOptions = TrackingAndTraining.getDowntimeDropdownOptions(
     actor.id!
@@ -179,38 +171,6 @@
     );
   };
 
-  const moveActivityUp = async (itemId: string) => {
-    const actor = getActor(sheet.actor.id!);
-    const items = getActorActivities(actor);
-
-    const idx = items.findIndex((x) => x.id === itemId);
-
-    if (idx <= 0) return;
-
-    const temp = items[idx - 1];
-    items[idx - 1] = items[idx];
-    items[idx] = temp;
-
-    setActorActivities(actor, items);
-    sheet.render(true);
-  };
-
-  const moveActivityDown = async (itemId: string) => {
-    const actor = getActor(sheet.actor.id!);
-    const items = getActorActivities(actor);
-
-    const idx = items.findIndex((x) => x.id === itemId);
-
-    if (idx <= -1 || idx === items.length - 1) return;
-
-    const temp = items[idx + 1];
-    items[idx + 1] = items[idx];
-    items[idx] = temp;
-
-    setActorActivities(actor, items);
-    sheet.render(true);
-  };
-
   const editWorldCategory = async (category: string) =>
     await TrackingAndTraining.editCategory(sheet.actor.id!, category, true);
   const deleteWorldCategory = async (category: string) =>
@@ -246,32 +206,88 @@
     );
   };
 
-  const moveWorldActivityUp = async (itemId: string) => {
-    const items = getWorldActivities();
-    const idx = items.findIndex((x) => x.id === itemId);
-    if (idx <= 0) return;
-
-    const temp = items[idx - 1];
-    items[idx - 1] = items[idx];
-    items[idx] = temp;
-
-    setWorldActivities(items);
-    sheet.render(true);
+  const onDragStart = ({
+    event,
+    actor,
+    activity,
+  }: {
+    event: DragEvent;
+    actor?: string;
+    activity: Downtime.TrackedItem;
+  }) => {
+    const dragData = { type: "downtime-activity", activity, actor };
+    event.dataTransfer?.setData("text/plain", JSON.stringify(dragData));
   };
 
-  const moveWorldActivityDown = async (itemId: string) => {
-    const items = getWorldActivities();
-    const idx = items.findIndex((x) => x.id === itemId);
-    if (idx <= -1 || idx === items.length - 1) return;
+  const onDrop = ({
+    event,
+    actor,
+    activity,
+  }: {
+    event: DragEvent;
+    actor?: string;
+    activity: Downtime.TrackedItem;
+  }) => {
+    const payload = foundry.applications.ux.TextEditor.getDragEventData(
+      event
+    ) as { type: string; activity: { id: string }; actor: string };
+    if (payload.type !== "downtime-activity") return;
+    event.preventDefault();
+    event.stopPropagation();
 
-    const temp = items[idx + 1];
-    items[idx + 1] = items[idx];
-    items[idx] = temp;
-
-    setWorldActivities(items);
-    sheet.render(true);
+    TrackingAndTraining.moveActivity({
+      sourceId: payload.activity.id,
+      targetId: activity.id,
+      targetActorId: actor,
+      sourceActorId: payload.actor,
+    });
   };
+
+  function exportTrackedItems() {
+    return TrackingAndTraining.exportItems(actor.id!);
+  }
+  function importTrackedItems() {
+    return TrackingAndTraining.importItems(actor.id!);
+  }
+
+  function openChangeLog() {
+    new AuditLogApp({ actor: actor as any }).render({ force: true });
+  }
 </script>
+
+  <div class="downtime-controls">
+    <div>
+    <button
+      type="button"
+      class="button downtime-dnd5e-export"
+      title={localize("downtime-dnd5e.ExportTrackedItemsTooltip")}
+      onclick={preventDefault(exportTrackedItems)}
+    >
+      <i class="fas fa-file-import"></i>
+      {localize("downtime-dnd5e.ExportTrackedItems")}
+    </button>
+    {#if showImportButton}
+      <button
+        type="button"
+        class="button downtime-dnd5e-import"
+        onclick={preventDefault(importTrackedItems)}
+        title={localize("downtime-dnd5e.ImportTrackedItemsTooltip")}
+      >
+        <i class="fas fa-file-export"></i>
+        {localize("downtime-dnd5e.ImportTrackedItems")}
+      </button>
+    {/if}
+    </div>
+    <button
+      type="button"
+      class="button downtime-dnd5e-audit"
+      title={localize("downtime-dnd5e.ReviewChanges")}
+      onclick={preventDefault(openChangeLog)}
+    >
+      <i class="fas fa-clipboard"></i>
+      {localize("downtime-dnd5e.ChangeLog")}
+    </button>
+  </div>
 
 {#if !showToUserEditMode}
   <ActorActivityButtons {actor} {showImportButton}>
@@ -283,6 +299,7 @@
   {#if uncategorizedActorActivities.activities.length}
     <ActivitiesTable
       {actor}
+      {isEditMode}
       category={uncategorizedActorActivities}
       onEditCategory={(catId) => editCategory(catId)}
       onDeleteCategory={(catId) => deleteCategory(catId)}
@@ -290,14 +307,15 @@
       onDeleteActivity={(itemId) => deleteActivity(itemId)}
       onRollActivity={(itemId) => rollActivity(itemId)}
       onSetProgress={(payload) => setProgress(payload)}
-      onMoveActivityUp={(itemId) => moveActivityUp(itemId)}
-      onMoveActivityDown={(itemId) => moveActivityDown(itemId)}
+      {onDragStart}
+      {onDrop}
     />
   {/if}
 
   {#each categorizedActorActivities as category (category.id)}
     <ActivitiesTable
       {actor}
+      {isEditMode}
       {category}
       onEditCategory={(catId) => editCategory(catId)}
       onDeleteCategory={(catId) => deleteCategory(catId)}
@@ -305,9 +323,9 @@
       onDeleteActivity={(itemId) => deleteActivity(itemId)}
       onRollActivity={(itemId) => rollActivity(itemId)}
       onSetProgress={(payload) => setProgress(payload)}
-      onMoveActivityUp={(itemId) => moveActivityUp(itemId)}
-      onMoveActivityDown={(itemId) => moveActivityDown(itemId)}
       categoryControls={true}
+      {onDragStart}
+      {onDrop}
     />
   {/each}
 </section>
@@ -321,6 +339,7 @@
 <section class="items-list downtime-list">
   {#if uncategorizedWorldActivities.activities.length}
     <ActivitiesTable
+      {isEditMode}
       category={uncategorizedWorldActivities}
       onEditCategory={(catId) => editWorldCategory(catId)}
       onDeleteCategory={(catId) => deleteWorldCategory(catId)}
@@ -328,13 +347,14 @@
       onDeleteActivity={(itemId) => deleteWorldActivity(itemId)}
       onRollActivity={(itemId) => rollWorldActivity(itemId)}
       onSetProgress={(payload) => setWorldProgress(payload)}
-      onMoveActivityUp={(itemId) => moveWorldActivityUp(itemId)}
-      onMoveActivityDown={(itemId) => moveWorldActivityDown(itemId)}
+      {onDragStart}
+      {onDrop}
     />
   {/if}
 
   {#each categorizedWorldActivities as category (category.id)}
     <ActivitiesTable
+      {isEditMode}
       {category}
       onEditCategory={(catId) => editWorldCategory(catId)}
       onDeleteCategory={(catId) => deleteWorldCategory(catId)}
@@ -342,9 +362,25 @@
       onDeleteActivity={(itemId) => deleteWorldActivity(itemId)}
       onRollActivity={(itemId) => rollWorldActivity(itemId)}
       onSetProgress={(payload) => setWorldProgress(payload)}
-      onMoveActivityUp={(itemId) => moveWorldActivityUp(itemId)}
-      onMoveActivityDown={(itemId) => moveWorldActivityDown(itemId)}
       categoryControls={true}
+      {onDragStart}
+      {onDrop}
     />
   {/each}
 </section>
+
+<style>
+    section {
+        gap: 16px;
+    }
+
+    .downtime-controls {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .downtime-controls button {
+        font-size: 10px;
+        padding: 0 8px;
+    }
+</style>
