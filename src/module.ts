@@ -22,81 +22,73 @@ import { SheetKey } from "./scripts/composables/useSheet.js";
 /* Initialize module					*/
 /* ------------------------------------ */
 Hooks.once("init", async () => {
-    // log(`${CONSTANTS.MODULE_ID} | Initializing ${CONSTANTS.MODULE_ID}`);
-    // Register custom module settings
-    registerSettings();
-    initHooks();
-    // Preload Handlebars templates
-    // await preloadTemplates();
+  registerSettings();
+  initHooks();
 });
 /* ------------------------------------ */
 /* Setup module							*/
 /* ------------------------------------ */
 Hooks.once("setup", function () {
-    // Do anything after initialization but before ready
-    setupHooks();
+  setupHooks();
 });
 /* ------------------------------------ */
 /* When ready							*/
 /* ------------------------------------ */
 Hooks.once("ready", async () => {
-    // Do anything once the module is ready
-    // if (!game.modules.get('lib-wrapper')?.active && game.user?.isGM) {
-    //   let word = 'install and activate';
-    //   if (game.modules.get('lib-wrapper')) word = 'activate';
-    //   throw Logger.error(`Requires the 'libWrapper' module. Please ${word} it.`);
-    // }
-    // if (!game.modules.get('socketLib')?.active && game.user?.isGM) {
-    //   let word = 'install and activate';
-    //   if (game.modules.get('socketLib')) word = 'activate';
-    //   throw Logger.error(`Requires the 'socketLib' module. Please ${word} it.`);
-    // }
-    readyHooks();
+  // Do anything once the module is ready
+  // if (!game.modules.get('lib-wrapper')?.active && game.user?.isGM) {
+  //   let word = 'install and activate';
+  //   if (game.modules.get('lib-wrapper')) word = 'activate';
+  //   throw Logger.error(`Requires the 'libWrapper' module. Please ${word} it.`);
+  // }
+  // if (!game.modules.get('socketLib')?.active && game.user?.isGM) {
+  //   let word = 'install and activate';
+  //   if (game.modules.get('socketLib')) word = 'activate';
+  //   throw Logger.error(`Requires the 'socketLib' module. Please ${word} it.`);
+  // }
+  readyHooks();
 });
 
-Hooks.on('renderActorSheetV2', (sheet: any, form, context, options) => {
-    const downtimeTab = form.querySelector('section[data-tab="downtime-dnd5e"]')
-    const mountRoot = downtimeTab?.querySelector('[data-vue]')
-    const tabs = form.querySelector('[data-container-id="tabs"]')
-    if (tabs && downtimeTab && mountRoot) {
-        tabs.append(downtimeTab)
-        // create some vue stuff
+Hooks.on("renderActorSheetV2", (sheet: Downtime.ActorSheetApplication, form: HTMLFormElement, context, options) => {
+  const downtimeTab = form.querySelector('section[data-tab="downtime-dnd5e"]');
+  const mountRoot = downtimeTab?.querySelector("[data-vue]");
+  const tabs = form.querySelector('[data-container-id="tabs"]');
 
-        if (!sheet[`__${CONSTANTS.MODULE_ID}_VUE_STATE__`]) {
-            const state = {
-                isEditMode: ref(false)
-            }
-            sheet[`__${CONSTANTS.MODULE_ID}_VUE_STATE__`] = state
-        }
+  if (tabs && downtimeTab && mountRoot) {
+    tabs.append(downtimeTab);
+    // create some vue stuff
 
-        sheet[`__${CONSTANTS.MODULE_ID}_VUE_STATE__`].isEditMode.value = sheet._mode === sheet.constructor.MODES.EDIT
-
-        if (sheet[`__${CONSTANTS.MODULE_ID}_INSTANCE__`]) {
-            sheet[`__${CONSTANTS.MODULE_ID}_INSTANCE__`].unmount()
-        }
-
-        sheet[`__${CONSTANTS.MODULE_ID}_INSTANCE__`] = createApp(SheetContent)
-            .provide('sheet', markRaw({ sheet, form, context, options }))
-            .provide(SheetKey, sheet[`__${CONSTANTS.MODULE_ID}_VUE_STATE__`] as any)
-
-
-        sheet[`__${CONSTANTS.MODULE_ID}_INSTANCE__`].mount(mountRoot)
-    } else {
+    if (!sheet[`__downtime-dnd5e_VUE_STATE__`]) {
+      const state = {
+        isEditMode: ref(false),
+      };
+      sheet[`__downtime-dnd5e_VUE_STATE__`] = state;
     }
 
+    sheet[`__downtime-dnd5e_VUE_STATE__`].isEditMode.value = sheet["_mode"] === sheet.constructor.MODES.EDIT;
 
-})
-
-Hooks.on('closeActorSheetV2', (sheet: any) => {
     if (sheet[`__${CONSTANTS.MODULE_ID}_INSTANCE__`]) {
-        sheet[`__${CONSTANTS.MODULE_ID}_INSTANCE__`].unmount()
-        sheet[`__${CONSTANTS.MODULE_ID}_INSTANCE__`] = null
+      sheet[`__${CONSTANTS.MODULE_ID}_INSTANCE__`].unmount();
     }
-})
+
+    sheet[`__${CONSTANTS.MODULE_ID}_INSTANCE__`] = createApp(SheetContent)
+      .provide("sheet", markRaw({ sheet, form, context, options }))
+      .provide(SheetKey, sheet[`__${CONSTANTS.MODULE_ID}_VUE_STATE__`] as any);
+
+    sheet[`__${CONSTANTS.MODULE_ID}_INSTANCE__`].mount(mountRoot);
+  }
+});
+
+Hooks.on("closeActorSheetV2", (sheet: any) => {
+  if (sheet[`__${CONSTANTS.MODULE_ID}_INSTANCE__`]) {
+    sheet[`__${CONSTANTS.MODULE_ID}_INSTANCE__`].unmount();
+    sheet[`__${CONSTANTS.MODULE_ID}_INSTANCE__`] = null;
+  }
+});
 
 /* ------------------------------------ */
 /* Other Hooks							*/
 /* ------------------------------------ */
 Hooks.once("devModeReady", ({ registerPackageDebugFlag }) => {
-    registerPackageDebugFlag(CONSTANTS.MODULE_ID);
+  registerPackageDebugFlag(CONSTANTS.MODULE_ID);
 });

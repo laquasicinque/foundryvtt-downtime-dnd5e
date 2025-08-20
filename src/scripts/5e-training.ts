@@ -1,29 +1,23 @@
-import { preloadTemplates } from "./utils/load-templates.js";
 import { registerSettings } from "./settings.js";
-import { registerHelpers } from "./handlebars-helpers.js";
+
 import { migrateToVersion1 } from "./migrations/migrationNumber1.js";
 import AuditLogApp from "./apps/AuditLogApp.js";
 import TrackingAndTraining from "./TrackingAndTraining.js";
 import CONSTANTS from "./constants.js";
 import API from "./api.js";
 import Logger from "./lib/Logger.js";
-import { manualOverride } from "./utils/manualOverride.js";
 import { DeepPartial } from "fvtt-types/utils";
 import { getActorActivities } from "./utils/activities.js";
 import { getActorCategories, getWorldCategories } from "./utils/categories.js";
 import { getActor } from "./utils/getActor.js";
 import { localize } from "./utils/localize.js";
 
-
 // Register Game Settings
 export const initHooks = () => {
     // Logger.warn("Init Hooks processing");
     // setup all the hooks
-    preloadTemplates();
     registerSettings();
-    registerHelpers();
 };
-
 
 export const setupHooks = () => {
     // Logger.warn("Setup Hooks processing");
@@ -32,30 +26,42 @@ export const setupHooks = () => {
 export const readyHooks = () => {
     API.crashTNT = crashTNT();
 
-    const mod = game?.modules?.get(CONSTANTS.MODULE_ID)
+    const mod = game?.modules?.get(CONSTANTS.MODULE_ID);
     if (mod) mod.api = API;
     migrateAllActors();
+    addTabsToCoreSheets()
+};
 
+function addTabsToCoreSheets() {
+    const sheet = ("CharacterActorSheet" in dnd5e.applications.actor
+        ? (dnd5e.applications.actor as any).CharacterActorSheet
+        : dnd5e.applications.actor.ActorSheet5eCharacter2) as dnd5e.applications.actor.ActorSheet5eCharacter2 & {
+            TABS: { label: string, tab: string, icon: string }[],
+            PARTS: Record<string, { template: string }>
+        }
     /**
-     * Add the tab to the sidebar
-     */
-    dnd5e.applications.actor.CharacterActorSheet.TABS.push({
-        label: 'Downtime',
+ * Add the tab to the sidebar
+ */
+    sheet.TABS.push({
+        label: "Downtime",
         tab: CONSTANTS.MODULE_ID,
-        icon: 'fas fa-clock'
-    })
+        icon: "fas fa-clock",
+    });
 
     /**
      * Add the template
      */
-    dnd5e.applications.actor.CharacterActorSheet.PARTS[CONSTANTS.MODULE_ID] = {
+    sheet.PARTS[CONSTANTS.MODULE_ID] = {
         template: `modules/${CONSTANTS.MODULE_ID}/templates/training-section-v3.hbs`,
-    }
-
-};
+    };
+}
 
 // The Meat And Potatoes
-async function addTrainingTab(app: Downtime.ActorSheetApplication, html: HTMLFormElement, data: { actor: dnd5e.documents.Actor5e, isCharacter: boolean, isNPC: boolean }) {
+async function addTrainingTab(
+    app: Downtime.ActorSheetApplication,
+    html: HTMLFormElement,
+    data: { actor: dnd5e.documents.Actor5e; isCharacter: boolean; isNPC: boolean },
+) {
     // Determine if we should show the downtime tab
     const enableCharacter = game.settings.get(CONSTANTS.MODULE_ID, "enableTraining");
     const enableNpc = game.settings.get(CONSTANTS.MODULE_ID, "enableTrainingNpc");
@@ -73,7 +79,7 @@ async function addTrainingTab(app: Downtime.ActorSheetApplication, html: HTMLFor
 
 function getTemplateData(data) {
     const actor = data.actor;
-    const notShowToUserEditMode = game.settings.get(CONSTANTS.MODULE_ID, "gmOnlyEditMode") && !game.users.current.isGM;
+    const notShowToUserEditMode = game.settings.get(CONSTANTS.MODULE_ID, "gmOnlyEditMode") && !game.users?.current?.isGM;
     const showImportButton = game.settings.get(CONSTANTS.MODULE_ID, "showImportButton");
 
     const categoriesActor = getActorCategories(actor);
@@ -231,22 +237,13 @@ async function migrateAllActors() {
                                     }
                                     // Repeat line for new versions as needed
                                 } catch (err) {
-                                    Logger.error(
-                                        localize("downtime-dnd5e.ProblemUpdatingDataFor") +
-                                        ": " +
-                                        a.data.name,
-                                        true,
-                                        err,
-                                    );
+                                    Logger.error(localize("downtime-dnd5e.ProblemUpdatingDataFor") + ": " + a.data.name, true, err);
                                 }
                                 delete allTrainingItems[j].updateMe;
                             }
                         }
                         await a.setFlag(CONSTANTS.MODULE_ID, CONSTANTS.FLAGS.trainingItems, allTrainingItems);
-                        Logger.info(
-                            localize("downtime-dnd5e.SuccessUpdatingDataFor") + ": " + a.data.name,
-                            true,
-                        );
+                        Logger.info(localize("downtime-dnd5e.SuccessUpdatingDataFor") + ": " + a.data.name, true);
                         Logger.debug(localize("downtime-dnd5e.SuccessUpdatingDataFor") + ": " + a.data.name);
                     }
                 }
@@ -329,12 +326,10 @@ export function crashTNT() {
 
     function getActivitiesForActor(actorName) {
         return API.getActivitiesForActor(actorName);
-
     }
 
     function getActivity(actorName, itemName) {
         return API.getActivity(actorName, itemName);
-
     }
 
     return {

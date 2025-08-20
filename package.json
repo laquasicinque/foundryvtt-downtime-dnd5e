@@ -23,7 +23,7 @@
   "devDependencies": {
     "@babel/eslint-parser": "^7.28.0",
     "@foundryvtt/foundryvtt-cli": "^1.1.0",
-    "@league-of-foundry-developers/foundry-vtt-types": "^13.346.0-beta.20250804084032",
+    "@league-of-foundry-developers/foundry-vtt-types": "^13.346.0-beta.20250812191140",
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@typescript-eslint/eslint-plugin": "^8.39.0",
     "@typhonjs-config/eslint-config": "^0.6.3",
