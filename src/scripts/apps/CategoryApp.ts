@@ -28,7 +28,7 @@ export default class CategoryApp extends VueApplicationMixin(
         id: `${CONSTANTS.MODULE_ID}-category-app`,
         wrapper: {
             tag: "form",
-            class: "standard-form dialog-form",
+            class: "standard-form downtime-dnd5e-form",
         },
         window: {
             title: "downtime-dnd5e.CreateEditCategoryAppTitle",

@@ -23,7 +23,7 @@ export default class AuditLogApp extends VueApplicationMixin(foundry.application
         id: "downtime-audit-log-app",
         wrapper: {
             tag: 'form',
-            class: 'standard-form downtime-dnd5e-audit-log-form'
+            class: 'standard-form downtime-dnd5e-form'
         },
         form: {
             closeOnSubmit: true,

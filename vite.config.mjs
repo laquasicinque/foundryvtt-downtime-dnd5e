@@ -3,9 +3,6 @@ import cleanPlugin from "vite-plugin-clean";
 import { normalizePath } from "vite";
 import path from "path";
 
-// ATTENTION!
-// Please modify the below variables: s_PACKAGE_ID and s_SVELTE_HASH_ID appropriately.
-
 // For convenience, you just need to modify the package ID below as it is used to fill in default proxy settings for
 // the dev server.
 const s_MODULE_ID = "downtime-dnd5e";
@@ -16,12 +13,6 @@ const s_ENTRY_JAVASCRIPT = "module.js";
 const s_COMPRESS = false; // Set to true to compress the module bundle.
 const s_SOURCEMAPS = true; // Generate sourcemaps for the bundle (recommended).
 
-
-// Used in bundling particularly during development. If you npm-link packages to your project add them here.
-const s_RESOLVE_CONFIG = {
-    browser: true,
-    dedupe: ["svelte"],
-};
 
 // ATTENTION!
 // You must change `base` and the `proxy` strings replacing `/modules/${s_MODULE_ID}/` with your
@@ -99,8 +90,6 @@ export default () => {
 
         plugins: [
             vue(),
-
-
             cleanPlugin(),
         ],
     };
