@@ -1,8 +1,6 @@
 <script lang="ts">
-  import DndTable, { type Column } from "../components/DndTable.svelte";
-  import DndTableCell from "../components/DndTableCell.svelte";
-  import DndTablePrimaryCell from "../components/DndTablePrimaryCell.svelte";
-  import DndTableRow from "../components/DndTableRow.svelte";
+  import { type Column } from "../components/DndTable.svelte";
+  import { TrackingAndTraining } from "../TrackingAndTraining";
   import DndProgress from "../components/DndProgress.svelte";
   import { localize } from "../utils/localize";
   import TidyTable from "../integrations/tidy5e/components/TidyTable.svelte";
@@ -12,11 +10,13 @@
   import TidyTableRow from "../integrations/tidy5e/components/TidyTableRow.svelte";
   import ExpandableContainer from "../integrations/tidy5e/components/ExpandableContainer.svelte";
   import { SvelteMap } from "svelte/reactivity";
+  import { preventDefault } from "../utils/preventDefault";
 
   type ActivitiesTableProps = {
     category: Downtime.CategoryWithActivities;
     categoryControls?: boolean;
     isEditMode?: boolean;
+    actor?: dnd5e.documents.Actor5e<"character">;
 
     onEditCategory?: (categoryId: string) => void;
     onDeleteCategory?: (categoryId: string) => void;
@@ -26,20 +26,31 @@
     onSetProgress?: (payload: { id: string; progress: number }) => void;
     onMoveActivityUp?: (itemId: string) => void;
     onMoveActivityDown?: (itemId: string) => void;
+    onDrop?: (payload: {
+      event: DragEvent;
+      activity: Downtime.TrackedItem;
+      actor?: string;
+    }) => void;
+    onDragStart?: (payload: {
+      event: DragEvent;
+      activity: Downtime.TrackedItem;
+      actor?: string;
+    }) => void;
   };
 
   const {
     category,
     categoryControls,
+    actor,
     onEditCategory,
     onDeleteCategory,
     onEditActivity,
     onDeleteActivity,
     onRollActivity,
     onSetProgress,
-    onMoveActivityUp,
-    onMoveActivityDown,
-    isEditMode = true,
+    onDrop: onDropProp,
+    onDragStart: onDragStartProp,
+    isEditMode = false,
   }: ActivitiesTableProps = $props();
 
   const isGm = $state(game.users.current?.isGM ?? false);
@@ -63,41 +74,25 @@
   const toggle = (activity: Downtime.TrackedItem | string) => {
     const id = typeof activity === "string" ? activity : activity.id;
     openStates.set(id, !openStates.get(id));
-    console.log(openStates.get(id));
     return Boolean(openStates.get(id));
-  };
-
-  const primaryCellClicked = (
-    event: MouseEvent,
-    activity: Downtime.TrackedItem
-  ) => {
-    event.preventDefault();
-    if (!isEditMode) onRollActivity?.(activity.id);
   };
 
   const editCategory = (categoryId: string) => onEditCategory?.(categoryId);
   const deleteCategory = (categoryId: string) => onDeleteCategory?.(categoryId);
   const editActivity = (itemId: string) => onEditActivity?.(itemId);
   const deleteActivity = (itemId: string) => onDeleteActivity?.(itemId);
-  const setProgress = (id: string, progress: number) =>
+  const setProgress = (id: string, progress: number) => {
     onSetProgress?.({ id, progress });
+  };
 
-  function handleDragStart(event: DragEvent, activity: Downtime.TrackedItem) {
+  function onDragStart(event: DragEvent, activity: Downtime.TrackedItem) {
     if (event.target !== event.currentTarget) {
-      // Allow for draggables within this containing element to be handled elsewhere.
       return;
     }
-
-    const dragData = { type: "downtime-activity", activity };
-    event.dataTransfer?.setData("text/plain", JSON.stringify(dragData));
-    console.log(event.dataTransfer?.getData("text/plain"));
+    onDragStartProp?.({ event, activity, actor: actor?.uuid });
   }
-
-function onDrop (event: DragEvent, category: Downtime.CategoryWithActivities, activity: Downtime.TrackedItem) {
-    event.preventDefault()
-    event.stopPropagation()
-    console.log(foundry.applications.ux.TextEditor.getDragEventData(event))
-    console.log({activity, category})
+  function onDrop(event: DragEvent, activity: Downtime.TrackedItem) {
+    onDropProp?.({ event, activity, actor: actor?.uuid });
   }
 </script>
 
@@ -111,25 +106,46 @@ function onDrop (event: DragEvent, category: Downtime.CategoryWithActivities, ac
       <TidyTableHeaderCell>Type</TidyTableHeaderCell>
       <TidyTableHeaderCell></TidyTableHeaderCell>
       <TidyTableHeaderCell>Progress</TidyTableHeaderCell>
-      {#if isEditMode}
-        <TidyTableHeaderCell></TidyTableHeaderCell>
-      {/if}
+      <TidyTableHeaderCell class={{ "header-cell-actions": !isEditMode }}>
+        {#if isEditMode}
+          <a class="tidy-table-button" title="Create Effect"
+            ><i class="fas fa-edit"></i></a
+          >
+          <a class="tidy-table-button" title="Create Effect"
+            ><i class="fas fa-trash"></i></a
+          >
+        {:else}
+          <a class="tidy-table-button" title="Create Effect"
+            ><i class="fas fa-plus"></i></a
+          >
+        {/if}
+      </TidyTableHeaderCell>
     </TidyTableHeaderRow>
   {/snippet}
   {#snippet body()}
     {#each category.activities as activity (activity.id)}
       <TidyTableRow
         rowAttributes={{ "data-tidy-draggable": true }}
-        rowContainerAttributes={{ ondrop: (event: DragEvent) => onDrop(event, category, activity)}}
-        ondragstart={(event) => handleDragStart(event, activity)}
+        rowContainerAttributes={{
+          ondrop: (event: DragEvent) => onDrop(event, activity),
+        }}
+        ondragstart={(event) => onDragStart(event, activity)}
       >
         <TidyTableCell primary attributes={{ onclick: () => toggle(activity) }}>
-          <a class="tidy-table-row-use-button">
+          <button
+            type="button"
+            aria-label="Roll"
+            class="tidy-table-row-use-button"
+            onclick={preventDefault((e) => {
+              e.stopPropagation();
+              onRollActivity?.(activity.id);
+            })}
+          >
             <img class="item-image" src={activity.img} />
             <span class="roll-prompt">
               <i class="fa fa-dice-d20"></i>
             </span>
-          </a>
+          </button>
 
           <span class="item-name">
             <span class="cell-text">
@@ -147,11 +163,18 @@ function onDrop (event: DragEvent, category: Downtime.CategoryWithActivities, ac
         </TidyTableCell>
         <TidyTableCell>{activity.progressionStyle}</TidyTableCell>
         <TidyTableCell
-          ><input type="number" value={activity.progress} class="numer" /><span
-            class="denom">/{activity.completionAt}</span
-          ></TidyTableCell
+          ><input
+            type="number"
+            bind:value={activity.progress}
+            class="numer"
+            onchange={(e) =>
+              setProgress(
+                activity.id,
+                (e.target as HTMLInputElement).valueAsNumber
+              )}
+          /><span class="denom"></span></TidyTableCell
         >
-        <TidyTableCell
+        <TidyTableCell columnWidth={isEditMode ? null : `10rem`}
           ><DndProgress
             value={activity.progress}
             max={activity.completionAt}
@@ -178,28 +201,6 @@ function onDrop (event: DragEvent, category: Downtime.CategoryWithActivities, ac
               onclick={() => deleteActivity(activity.id)}
             >
               <i class="fas fa-trash"></i>
-            </button>
-            <a
-              type="button"
-              id={`downtime-dnd5e-move-controls`}
-              class="tidy-table-button"
-              data-tid="controls"
-              title="Move Activity Up"
-              aria-label="Move Activity Up"
-              onclick={() => onMoveActivityUp?.(activity.id)}
-            >
-              <i class="fas fa-chevron-up"></i>
-            </a>
-            <button
-              type="button"
-              id={`downtime-dnd5e-move-controls`}
-              class="tidy-table-button"
-              data-tid="controls"
-              title="Move Activity Down"
-              aria-label="Move Activity Down"
-              onclick={() => onMoveActivityDown?.(activity.id)}
-            >
-              <i class="fas fa-chevron-down"></i>
             </button>
           </TidyTableCell>
         {/if}
@@ -237,5 +238,24 @@ function onDrop (event: DragEvent, category: Downtime.CategoryWithActivities, ac
   button.tidy-table-button {
     padding: 0;
     width: var(--t5e-table-button-width);
+  }
+
+  .tidy-table-row-use-button {
+    --t5e-use-button-border-color: var(--t5e-color-gold);
+    align-items: center;
+    align-self: center;
+    border-radius: 0.125rem;
+    outline: 0.0625rem solid var(--t5e-use-button-border-color);
+    cursor: pointer;
+    display: grid;
+    grid-template-columns: 1fr;
+    height: var(--t5e-icon-size-7x);
+    width: var(--t5e-icon-size-7x);
+    justify-content: center;
+    margin: 0.0625rem 0 0.0625rem 0.0625rem;
+    overflow: hidden;
+    position: relative;
+    transition: all var(--t5e-transition-default);
+    padding: 0;
   }
 </style>

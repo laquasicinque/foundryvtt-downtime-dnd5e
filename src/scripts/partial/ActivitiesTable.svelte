@@ -80,9 +80,8 @@
       return;
     }
     onDragStartProp({event, activity, actor: actor?.uuid})
-
-
   }
+
   function onDrop(event: DragEvent, activity: Downtime.TrackedItem) {
     onDropProp({event, activity, actor: actor?.uuid})
   }
@@ -138,7 +137,7 @@
             <input
               style="width: 2.5rem"
               type="number"
-              bind:value={activity.progress}
+              value={activity.progress}
               onchange={(e) =>
                 setProgress(
                   activity.id,

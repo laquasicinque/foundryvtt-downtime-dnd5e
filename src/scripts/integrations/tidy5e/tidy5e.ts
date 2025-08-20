@@ -12,16 +12,9 @@ export function registerTidy5eSheet(
         iconClass: 'fa-solid fa-clock',
         tabId: "downtime",
         getProps(data) {
-            return { actor: data.actor, sheet: data.sheet };
+            return { actor: data.actor, sheet: data.sheet, context: data.sheet._context };
         },
         enabled: () => true,
-        getContext(context) {
-            const { data: { sheet } } = context.get('context')
-            const myContext = new Map(context)
-            myContext.set('sheet', sheet)
-            return myContext
-        },
-
     });
 
     api.registerCharacterTab(tab, { overrideExisting: true });

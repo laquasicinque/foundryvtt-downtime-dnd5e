@@ -36,12 +36,16 @@ export const TrackingAndTraining = {
         const allCategories = getCategories({ actor: world ? undefined : actor });
 
         const category = allCategories.find((obj) => obj.id === categoryId);
-        new CategoryApp({
+        const catApp = new CategoryApp({
             actor,
             category,
             world,
             editing: true,
-        }).render({ force: true });
+        })
+
+        catApp.render({ force: true });
+
+        return catApp.resolveOnClose
     },
 
     async deleteCategory(actorId: string, categoryId: string, world = false) {
@@ -85,7 +89,9 @@ export const TrackingAndTraining = {
             dropdownOptions,
             world,
         };
-        new TrackedItemApp(data).render({ force: true });
+        const tracked = new TrackedItemApp(data)
+        tracked.render({ force: true });
+        return tracked.resolveOnClose
     },
 
     async editFromSheet(
@@ -115,7 +121,10 @@ export const TrackingAndTraining = {
             editMode: true,
             world,
         };
-        new TrackedItemApp(data).render({ force: true });
+        const track = new TrackedItemApp(data)
+        track.render({ force: true });
+
+        return track.resolveOnClose
     },
 
     async deleteFromSheet(actorId: string, itemId: string, world = false) {

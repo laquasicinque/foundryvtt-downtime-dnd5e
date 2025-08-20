@@ -1,39 +1,78 @@
 <script lang="ts">
-  import { getContext, getAllContexts } from "svelte";
-  import type { Snippet } from "svelte";
   import ActorActivityButtons from "./ActorActivityButtons.svelte";
   import CONSTANTS from "../constants";
   import { localize } from "../utils/localize";
   import { TrackingAndTraining } from "../TrackingAndTraining";
   import TidyActivitiesTable from "./TidyActivitiesTable.svelte";
   import { pluckId } from "../utils/pluckId";
-  import { getActor } from "../utils/getActor";
+  import AuditLogApp from "../apps/AuditLogApp";
   import { getActorCategories, getWorldCategories } from "../utils/categories";
   import {
     getActorActivities,
     getActorActivitiesMap,
     getWorldActivities,
     getWorldActivitiesMap,
-    setActorActivities,
-    setWorldActivities,
   } from "../utils/activities";
   import WorldActivityButtons from "./WorldActivityButtons.svelte";
   import { map } from "../utils/iterables/map";
   import { clamp } from "../utils/clamp";
+  import { preventDefault } from "../utils/preventDefault";
 
+  const {
+    actor,
+    sheet,
+    context,
+  }: { sheet: any; actor: dnd5e.documents.Actor5e<"character">; context: any } =
+    $props();
 
-  const { actor, sheet }: { sheet: any, actor: dnd5e.documents.Actor5e} = $props()
+  const dropdownOptions = TrackingAndTraining.getDowntimeDropdownOptions(
+    actor.id!
+  );
+  let isEditMode = $state(context.data.unlocked);
+  // we ues this to trigger reactive updates
+  let version = $state(0);
 
-  const dropdownOptions = TrackingAndTraining.getDowntimeDropdownOptions(actor.id!);
+  const updatesVersion = <T extends AnyFunction>(fn: T) => {
+    return async (...args: Parameters<T>) => {
+      const result = await fn(...args);
+      version++;
+      return result;
+    };
+  };
 
-  const showToUserEditMode = !game.settings.get(CONSTANTS.MODULE_ID, "gmOnlyEditMode") && !game.users?.current?.isGM;
-  const showImportButton = game.settings.get(CONSTANTS.MODULE_ID, "showImportButton");
+  // TODO: Replace this when tidy provides the same context, if that fixes the context problem
+  const handler = (evSheet, _form, { unlocked }) => {
+    if (evSheet !== sheet) return;
+    isEditMode = unlocked;
+  };
 
-  const categoriesActor = getActorCategories(actor);
-  const categoriesWorld = getWorldCategories();
+  Hooks.on("tidy5e-sheet.sheetModeConfiguring", handler);
+  $effect(() => {
+    return () => Hooks.off("tidy5e-sheet.sheetModeConfiguring", handler);
+  });
 
-  const categoriesActorIds = new Set(pluckId(categoriesActor));
-  const categoriesWorldIds = new Set(pluckId(categoriesActor));
+  const showToUserEditMode = $derived.by(() => {
+    version;
+    return (
+      !game.settings.get(CONSTANTS.MODULE_ID, "gmOnlyEditMode") &&
+      !game.users?.current?.isGM
+    );
+  });
+  const showImportButton = $derived.by(() => {
+    version;
+    return game.settings.get(CONSTANTS.MODULE_ID, "showImportButton");
+  });
+
+  const categoriesActor = $derived.by(() => {
+    version;
+    return getActorCategories(actor);
+  });
+  const categoriesWorld = $derived.by(() => {
+    version;
+    return getWorldCategories();
+  });
+  const categoriesActorIds = $derived(new Set(pluckId(categoriesActor)));
+  const categoriesWorldIds = $derived(new Set(pluckId(categoriesActor)));
 
   const appendDc = (str: string, activity: Downtime.TrackedItem) => {
     if (!activity.dc) return str;
@@ -46,12 +85,18 @@
       case "FIXED":
         return localize("downtime-dnd5e.ProgressionStyleFixed");
       case "ABILITY":
-        return appendDc(CONFIG.DND5E.abilities[activity.ability].label, activity);
+        return appendDc(
+          CONFIG.DND5E.abilities[activity.ability].label,
+          activity
+        );
       case "SKILL":
         return appendDc(CONFIG.DND5E.skills[activity.skill].label, activity);
       case "TOOL": {
         const tool = actor.items.find((item) => item.id === activity.tool);
-        return appendDc(tool ? tool.name : `[${localize("downtime-dnd5e.InvalidTool")}]`, activity);
+        return appendDc(
+          tool ? tool.name : `[${localize("downtime-dnd5e.InvalidTool")}]`,
+          activity
+        );
       }
       case "MACRO":
         return localize("downtime-dnd5e.ProgressionStyleMacro");
@@ -66,18 +111,34 @@
     isComplete: act.progress >= act.completionAt,
   }));
 
-  const activitiesActor = getActorActivities(actor);
-  const formattedActorActivities = [...mapFormatActivities(activitiesActor)];
+  const activitiesActor = $derived.by(() => {
+    version;
+    return getActorActivities(actor);
+  });
+  const formattedActorActivities = $derived([
+    ...mapFormatActivities(activitiesActor),
+  ]);
 
-  const activitiesWorld = getWorldActivities();
-  const formattedWorldActivities = [...mapFormatActivities(activitiesWorld)];
+  const activitiesWorld = $derived.by(() => {
+    version;
+    return getWorldActivities();
+  });
+  const formattedWorldActivities = $derived([
+    ...mapFormatActivities(activitiesWorld),
+  ]);
 
-  const activitiesActorUncategorized = formattedActorActivities.filter(
-    (activity) => !(activity.category && categoriesActorIds.has(activity.category))
+  const activitiesActorUncategorized = $derived(
+    formattedActorActivities.filter(
+      (activity) =>
+        !(activity.category && categoriesActorIds.has(activity.category))
+    )
   );
 
-  const activitiesWorldUncategorized = formattedWorldActivities.filter(
-    (activity) => !(activity.category && categoriesWorldIds.has(activity.category))
+  const activitiesWorldUncategorized = $derived(
+    formattedWorldActivities.filter(
+      (activity) =>
+        !(activity.category && categoriesWorldIds.has(activity.category))
+    )
   );
 
   const categorizedActorActivities = $derived(
@@ -86,7 +147,9 @@
         (category) =>
           ({
             ...category,
-            activities: formattedActorActivities.filter((x) => x.category === category.id),
+            activities: formattedActorActivities.filter(
+              (x) => x.category === category.id
+            ),
           }) as Downtime.CategoryWithActivities
       )
       .filter((x) => x.activities.length)
@@ -105,7 +168,9 @@
         (category) =>
           ({
             ...category,
-            activities: formattedWorldActivities.filter((x) => x.category === category.id),
+            activities: formattedWorldActivities.filter(
+              (x) => x.category === category.id
+            ),
           }) as Downtime.CategoryWithActivities
       )
       .filter((x) => x.activities.length)
@@ -118,144 +183,298 @@
     activities: activitiesWorldUncategorized,
   } as Downtime.CategoryWithActivities);
 
-  const hasCharacterDowntimes = $derived(
-    !!uncategorizedActorActivities.activities.length || categorizedActorActivities.some((x) => x.activities.length)
+  const editCategory = updatesVersion(
+    async (category: string) =>
+      await TrackingAndTraining.editCategory(sheet.actor.id!, category)
+  );
+  const deleteCategory = updatesVersion(
+    async (category: string) =>
+      await TrackingAndTraining.deleteCategory(sheet.actor.id!, category)
+  );
+  const editActivity = updatesVersion(
+    async (itemId: string) =>
+      await TrackingAndTraining.editFromSheet(
+        sheet.actor.id!,
+        itemId,
+        dropdownOptions
+      )
+  );
+  const deleteActivity = updatesVersion(
+    async (itemId: string) =>
+      await TrackingAndTraining.deleteFromSheet(sheet.actor.id!, itemId)
+  );
+  const rollActivity = updatesVersion(
+    async (itemId: string) =>
+      await TrackingAndTraining.progressItem(sheet.actor.id!, itemId)
   );
 
-  const hasWorldDowntimes = $derived(
-    !!uncategorizedWorldActivities.activities.length || categorizedWorldActivities.some((x) => x.activities.length)
+  const setProgress = updatesVersion(
+    async ({ id, progress }: { id: string; progress: number }) => {
+      const items = getActorActivitiesMap(actor);
+      const item = items.get(id);
+      if (!item) return;
+
+      const clampedProgress = clamp(progress, item.completionAt);
+      await TrackingAndTraining.updateItemProgressFromSheet(
+        actor.id!,
+        id,
+        clampedProgress.toNearest(1).toString()
+      );
+    }
   );
 
-  const editCategory = async (category: string) => await TrackingAndTraining.editCategory(sheet.actor.id!, category);
-  const deleteCategory = async (category: string) =>
-    await TrackingAndTraining.deleteCategory(sheet.actor.id!, category);
-  const editActivity = async (itemId: string) =>
-    await TrackingAndTraining.editFromSheet(sheet.actor.id!, itemId, dropdownOptions);
-  const deleteActivity = async (itemId: string) => await TrackingAndTraining.deleteFromSheet(sheet.actor.id!, itemId);
-  const rollActivity = async (itemId: string) => TrackingAndTraining.progressItem(sheet.actor.id!, itemId);
-  const setProgress = ({ id, progress }: { id: string; progress: number }) => {
-    const items = getActorActivitiesMap(actor);
-    const item = items.get(id);
+  const editWorldCategory = updatesVersion(
+    async (category: string) =>
+      await TrackingAndTraining.editCategory(sheet.actor.id!, category, true)
+  );
+  const deleteWorldCategory = updatesVersion(
+    async (category: string) =>
+      await TrackingAndTraining.deleteCategory(sheet.actor.id!, category, true)
+  );
+  const editWorldActivity = updatesVersion(
+    async (itemId: string) =>
+      await TrackingAndTraining.editFromSheet(
+        sheet.actor.id!,
+        itemId,
+        dropdownOptions,
+        true
+      )
+  );
+  const deleteWorldActivity = updatesVersion(
+    async (itemId: string) =>
+      await TrackingAndTraining.deleteFromSheet(sheet.actor.id!, itemId, true)
+  );
+  const rollWorldActivity = updatesVersion(async (itemId: string) =>
+    TrackingAndTraining.progressItem(sheet.actor.id!, itemId, true)
+  );
+  const setWorldProgress = updatesVersion(
+    async ({ id, progress }: { id: string; progress: number }) => {
+      const items = getWorldActivitiesMap();
+      const item = items.get(id);
+      if (!item) return;
 
-    if (!item) return;
+      const clampedProgress = clamp(progress, item.completionAt);
+      await TrackingAndTraining.updateItemProgressFromSheet(
+        actor.id!,
+        id,
+        clampedProgress.toNearest(1).toString(),
+        true
+      );
+    }
+  );
 
-    const clampedProgress = clamp(progress, item.completionAt);
-    TrackingAndTraining.updateItemProgressFromSheet(actor.id!, id, clampedProgress.toNearest(1).toString());
+  const onDragStart = ({
+    event,
+    actor,
+    activity,
+  }: {
+    event: DragEvent;
+    actor?: string;
+    activity: Downtime.TrackedItem;
+  }) => {
+    const dragData = { type: "downtime-activity", activity, actor };
+    event.dataTransfer?.setData("text/plain", JSON.stringify(dragData));
   };
 
-  const moveActivityUp = async (itemId: string) => {
-    const actor = getActor(sheet.actor.id!);
-    const items = getActorActivities(actor);
+  const onDrop = updatesVersion(
+    async ({
+      event,
+      actor,
+      activity,
+    }: {
+      event: DragEvent;
+      actor?: string;
+      activity: Downtime.TrackedItem;
+    }) => {
+      const payload = foundry.applications.ux.TextEditor.getDragEventData(
+        event
+      ) as { type: string; activity: { id: string }; actor: string };
+      if (payload.type !== "downtime-activity") return;
+      event.preventDefault();
+      event.stopPropagation();
 
-    const idx = items.findIndex((x) => x.id === itemId);
+      await TrackingAndTraining.moveActivity({
+        sourceId: payload.activity.id,
+        targetId: activity.id,
+        targetActorId: actor,
+        sourceActorId: payload.actor,
+      });
+    }
+  );
 
-    if (idx <= 0) return;
+  const addCategory = updatesVersion(
+    async () => await TrackingAndTraining.addCategory(actor.id!)
+  );
 
-    const temp = items[idx - 1];
-    items[idx - 1] = items[idx];
-    items[idx] = temp;
+  const addItem = updatesVersion(
+    async () => await TrackingAndTraining.addItem(actor.id!, dropdownOptions)
+  );
 
-    setActorActivities(actor, items);
-    sheet.render(true);
-  };
+  function exportTrackedItems() {
+    return TrackingAndTraining.exportItems(actor.id!);
+  }
+  function importTrackedItems() {
+    return TrackingAndTraining.importItems(actor.id!);
+  }
 
-  const moveActivityDown = async (itemId: string) => {
-    const actor = getActor(sheet.actor.id!);
-    const items = getActorActivities(actor);
-
-    const idx = items.findIndex((x) => x.id === itemId);
-
-    if (idx <= -1 || idx === items.length - 1) return;
-
-    const temp = items[idx + 1];
-    items[idx + 1] = items[idx];
-    items[idx] = temp;
-
-    setActorActivities(actor, items);
-    sheet.render(true);
-  };
-
-  const editWorldCategory = async (category: string) =>
-    await TrackingAndTraining.editCategory(sheet.actor.id!, category, true);
-  const deleteWorldCategory = async (category: string) =>
-    await TrackingAndTraining.deleteCategory(sheet.actor.id!, category, true);
-  const editWorldActivity = async (itemId: string) =>
-    await TrackingAndTraining.editFromSheet(sheet.actor.id!, itemId, dropdownOptions, true);
-  const deleteWorldActivity = async (itemId: string) =>
-    await TrackingAndTraining.deleteFromSheet(sheet.actor.id!, itemId, true);
-  const rollWorldActivity = async (itemId: string) => TrackingAndTraining.progressItem(sheet.actor.id!, itemId, true);
-  const setWorldProgress = ({ id, progress }: { id: string; progress: number }) => {
-    const items = getWorldActivitiesMap();
-    const item = items.get(id);
-    if (!item) return;
-
-    const clampedProgress = clamp(progress, item.completionAt);
-    TrackingAndTraining.updateItemProgressFromSheet(actor.id!, id, clampedProgress.toNearest(1).toString(), true);
-  };
-
-  const moveWorldActivityUp = async (itemId: string) => {
-    const items = getWorldActivities();
-    const idx = items.findIndex((x) => x.id === itemId);
-    if (idx <= 0) return;
-
-    const temp = items[idx - 1];
-    items[idx - 1] = items[idx];
-    items[idx] = temp;
-
-    setWorldActivities(items);
-    sheet.render(true);
-  };
-
-  const moveWorldActivityDown = async (itemId: string) => {
-    const items = getWorldActivities();
-    const idx = items.findIndex((x) => x.id === itemId);
-    if (idx <= -1 || idx === items.length - 1) return;
-
-    const temp = items[idx + 1];
-    items[idx + 1] = items[idx];
-    items[idx] = temp;
-
-    setWorldActivities(items);
-    sheet.render(true);
-  };
+  function openChangeLog() {
+    new AuditLogApp({ actor: actor as any }).render({ force: true });
+  }
 </script>
 
-{#if !showToUserEditMode}
-  <ActorActivityButtons {actor} {showImportButton}>
-    <h4>Character Downtimes</h4>
-  </ActorActivityButtons>
-{/if}
+<div class="downtime-controls">
+  <div>
+    <button
+      type="button"
+      class="button downtime-dnd5e-export"
+      title={localize("downtime-dnd5e.ExportTrackedItemsTooltip")}
+      onclick={preventDefault(exportTrackedItems)}
+    >
+      <i class="fas fa-file-import"></i>
+      {localize("downtime-dnd5e.ExportTrackedItems")}
+    </button>
+    {#if showImportButton}
+      <button
+        type="button"
+        class="button downtime-dnd5e-import"
+        onclick={preventDefault(importTrackedItems)}
+        title={localize("downtime-dnd5e.ImportTrackedItemsTooltip")}
+      >
+        <i class="fas fa-file-export"></i>
+        {localize("downtime-dnd5e.ImportTrackedItems")}
+      </button>
+    {/if}
+  </div>
+  <button
+    type="button"
+    class="button downtime-dnd5e-audit"
+    title={localize("downtime-dnd5e.ReviewChanges")}
+    onclick={preventDefault(openChangeLog)}
+  >
+    <i class="fas fa-clipboard"></i>
+    {localize("downtime-dnd5e.ChangeLog")}
+  </button>
+</div>
 
-<section class="items-list downtime-list">
+<section class="downtime-dnd5e-controls">
+  <h2>Character Downtimes</h2>
+  {#if !showToUserEditMode}
+    <div class="align-end">
+      <button
+        type="button"
+        class="button downtime-dnd5e-new-category"
+        title={localize("downtime-dnd5e.CreateNewCategory")}
+        onclick={preventDefault(addCategory)}
+      >
+        <i class="fas fa-folder-plus"></i>
+        {localize("downtime-dnd5e.AddCategory")}
+      </button>
+      <button
+        type="button"
+        class="button downtime-dnd5e-add"
+        onclick={preventDefault(addItem)}
+        title={localize("downtime-dnd5e.CreateNewItem")}
+      >
+        <i class="fas fa-circle-plus"></i>
+        {localize("downtime-dnd5e.AddItem")}
+      </button>
+    </div>
+  {/if}
+</section>
+
+<div class="tidy-table-container">
   {#if uncategorizedActorActivities.activities.length}
     <TidyActivitiesTable
+      {actor}
+      {isEditMode}
       category={uncategorizedActorActivities}
+      onEditCategory={(catId) => editCategory(catId)}
+      onDeleteCategory={(catId) => deleteCategory(catId)}
+      onEditActivity={(itemId) => editActivity(itemId)}
+      onDeleteActivity={(itemId) => deleteActivity(itemId)}
+      onRollActivity={(itemId) => rollActivity(itemId)}
+      onSetProgress={(payload) => setProgress(payload)}
+      {onDragStart}
+      {onDrop}
     />
   {/if}
 
   {#each categorizedActorActivities as category (category.id)}
     <TidyActivitiesTable
-    {category}
+      {actor}
+      {isEditMode}
+      {category}
+      onEditCategory={(catId) => editCategory(catId)}
+      onDeleteCategory={(catId) => deleteCategory(catId)}
+      onEditActivity={(itemId) => editActivity(itemId)}
+      onDeleteActivity={(itemId) => deleteActivity(itemId)}
+      onRollActivity={(itemId) => rollActivity(itemId)}
+      onSetProgress={(payload) => setProgress(payload)}
+      categoryControls={true}
+      {onDragStart}
+      {onDrop}
     />
   {/each}
-</section>
+</div>
 
 <hr />
 
 <WorldActivityButtons {actor}>
-  <h4>World Downtimes</h4>
+  <h2>World Downtimes</h2>
 </WorldActivityButtons>
 
-<section class="items-list downtime-list">
+<div class="items-list downtime-list">
   {#if uncategorizedWorldActivities.activities.length}
     <TidyActivitiesTable
+      {isEditMode}
       category={uncategorizedWorldActivities}
+      onEditCategory={(catId) => editWorldCategory(catId)}
+      onDeleteCategory={(catId) => deleteWorldCategory(catId)}
+      onEditActivity={(itemId) => editWorldActivity(itemId)}
+      onDeleteActivity={(itemId) => deleteWorldActivity(itemId)}
+      onRollActivity={(itemId) => rollWorldActivity(itemId)}
+      onSetProgress={(payload) => setWorldProgress(payload)}
+      {onDragStart}
+      {onDrop}
     />
   {/if}
 
   {#each categorizedWorldActivities as category (category.id)}
     <TidyActivitiesTable
+      {isEditMode}
       {category}
+      onEditCategory={(catId) => editWorldCategory(catId)}
+      onDeleteCategory={(catId) => deleteWorldCategory(catId)}
+      onEditActivity={(itemId) => editWorldActivity(itemId)}
+      onDeleteActivity={(itemId) => deleteWorldActivity(itemId)}
+      onRollActivity={(itemId) => rollWorldActivity(itemId)}
+      onSetProgress={(payload) => setWorldProgress(payload)}
+      categoryControls={true}
+      {onDragStart}
+      {onDrop}
     />
   {/each}
-</section>
+</div>
+
+<style>
+  .downtime-dnd5e-controls {
+    display: flex;
+    align-items: flex-start;
+    margin-top: 8px;
+  }
+
+  .downtime-dnd5e-controls > div {
+    display: flex;
+  }
+
+  .downtime-dnd5e-controls button {
+    font-size: 10px;
+    padding: 0 8px;
+    margin: 0 2px;
+  }
+
+  .align-end {
+    margin-left: auto;
+    justify-self: flex-end;
+  }
+</style>
