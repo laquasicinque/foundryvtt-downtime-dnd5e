@@ -86,6 +86,6 @@ export default () => {
             },
         },
 
-        plugins: [svelte({ configFile: "../svelte.config.ts" }), cleanPlugin()],
+        plugins: [svelte({ configFile: "../svelte.config.js" }), cleanPlugin()],
     };
 };
