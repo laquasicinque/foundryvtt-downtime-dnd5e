@@ -2,13 +2,20 @@ import type { DeepPartial } from "../types";
 import { getActorActivities, setActorActivities } from "../utils/activities";
 import { getActor } from "../utils/getActor";
 import { Iter } from "../utils/iterables/Iter";
-import { SvelteApplicationMixin, type Configuration } from "../utils/SvelteApplicationMixin";
+import {
+  SvelteApplicationMixin,
+  type Configuration,
+} from "../utils/SvelteApplicationMixin";
 import AuditLogAppComponent from "./AuditLogApp.svelte";
 
 export default class AuditLogApp extends SvelteApplicationMixin(
-  foundry.applications.api.ApplicationV2<any, Configuration<{ actor: dnd5e.documents.Actor5e }>, any>,
+  foundry.applications.api.ApplicationV2<
+    any,
+    Configuration<{ actor: dnd5e.documents.Actor5e }>,
+    any
+  >,
 ) {
-  public get actor(): dnd5e.documents.Actor5e {
+  public get actor(): dnd5e.documents.Actor5e<"character"> {
     return this.options.actor;
   }
 
@@ -40,12 +47,19 @@ export default class AuditLogApp extends SvelteApplicationMixin(
     },
   } satisfies DeepPartial<Configuration>;
 
-  static async #submitForm(this: AuditLogApp, _event: SubmitEvent, form: HTMLFormElement, formData: FormDataExtended) {
+  static async #submitForm(
+    this: AuditLogApp,
+    _event: SubmitEvent | Event,
+    form: HTMLFormElement,
+    formData: FormDataExtended,
+  ) {
     const actorId = formData.object.actorId as string;
     const actor = getActor(actorId);
     const activities = getActorActivities(actor);
 
-    const dismissed = new Set(formData.object.dismiss as string[]).filter((x) => !!x);
+    const dismissed = new Set(formData.object.dismiss as string[]).filter(
+      (x) => !!x,
+    );
     if (!dismissed.size) return;
 
     for (const activity of activities) {
@@ -67,18 +81,22 @@ export default class AuditLogApp extends SvelteApplicationMixin(
 
     const activities = getActorActivities(this.actor);
     const changes = Iter.from(activities)
-      .flatMap((act): [string, Downtime.AuditLogV1][] => act.changes.map((change) => [act.name, change]))
+      .flatMap((act): [string, Downtime.AuditLogV1][] =>
+        act.changes.map((change) => [act.name, change]),
+      )
       .filter(([, change]) => !change.dismissed)
       .map(([activityName, change]) => {
         let difference = change.newValue - change.oldValue;
-        const diffString = difference > 0 ? `+${difference}` : difference.toString();
+        const diffString =
+          difference > 0 ? `+${difference}` : difference.toString();
         const timestamp = new Date(change.timestamp);
         // Set up our display object
         return {
           timestamp: timestamp.getTime(),
-          timestampFormat: new Intl.DateTimeFormat(undefined, { timeStyle: "medium", dateStyle: "short" }).format(
-            new Date(timestamp),
-          ),
+          timestampFormat: new Intl.DateTimeFormat(undefined, {
+            timeStyle: "medium",
+            dateStyle: "short",
+          }).format(new Date(timestamp)),
           user: change.user,
           activityName,
           actionName: change.actionName,

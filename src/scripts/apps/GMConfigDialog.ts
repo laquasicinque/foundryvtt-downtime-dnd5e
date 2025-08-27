@@ -7,7 +7,7 @@ import { getWorldActivities, setWorldActivities } from "../utils/activities";
 
 export class GMConfig extends foundry.applications.api.DialogV2 {
   static DEFAULT_OPTIONS = {
-    id: `${CONSTANTS.MODULE_ID}-{id}-gm-config`,
+    id: `${CONSTANTS.MODULE_ID}-gm-config`,
     window: {
       title: "Modify Global Downtime Events",
     },
@@ -50,10 +50,16 @@ export class GMConfig extends foundry.applications.api.DialogV2 {
         callback: async () => {
           const data = getWorldActivities();
           const json = JSON.stringify(data, null, 2);
-          foundry.utils.saveDataToFile(json, "application/json", `${CONSTANTS.MODULE_ID}-world-activities.json`);
+          foundry.utils.saveDataToFile(
+            json,
+            "application/json",
+            `${CONSTANTS.MODULE_ID}-world-activities.json`,
+          );
           Logger.info("Downtime: Saved Activity Data.", true);
         },
       },
     ],
-  } satisfies DeepPartial<foundry.applications.api.DialogV2.Configuration<foundry.applications.api.DialogV2.Any>>;
+  } satisfies DeepPartial<
+    foundry.applications.api.DialogV2.Configuration<foundry.applications.api.DialogV2.Any>
+  >;
 }
