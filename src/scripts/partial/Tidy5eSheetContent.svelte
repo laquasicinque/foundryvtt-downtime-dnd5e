@@ -7,6 +7,7 @@
   import { pluckId } from "../utils/pluckId";
   import AuditLogApp from "../apps/AuditLogApp";
   import { getActorCategories, getWorldCategories } from "../utils/categories";
+  import { getAllContexts, getContext } from "svelte";
   import {
     getActorActivities,
     getActorActivitiesMap,
@@ -14,42 +15,41 @@
     getWorldActivitiesMap,
   } from "../utils/activities";
   import WorldActivityButtons from "./WorldActivityButtons.svelte";
-  import { map } from "../utils/iterables/map";
+  import { map } from 'it-al'
   import { clamp } from "../utils/clamp";
   import { preventDefault } from "../utils/preventDefault";
+  import { derived } from "svelte/store";
 
   const {
     actor,
-    sheet,
-    context,
   }: { sheet: any; actor: dnd5e.documents.Actor5e<"character">; context: any } =
     $props();
+
+
+  const context = getContext("context");
+  const sheet = derived(context, ($context) => $context.data.sheet)
+  getAllContexts().forEach((value,key) => {
+    value.subscribe((val) => console.log({[key]: val}))
+  })
+  $inspect({sheet, $sheet,})
 
   const dropdownOptions = TrackingAndTraining.getDowntimeDropdownOptions(
     actor.id!
   );
-  let isEditMode = $state(context.data.unlocked);
-  // we ues this to trigger reactive updates
-  let version = $state(0);
+  let isEditMode = derived<any, boolean>(
+    context,
+    ($context: any) => $context.data.unlocked
+  );
+
+  const version = $state(0)
+
 
   const updatesVersion = <T extends AnyFunction>(fn: T) => {
     return async (...args: Parameters<T>) => {
       const result = await fn(...args);
-      version++;
       return result;
     };
   };
-
-  // TODO: Replace this when tidy provides the same context, if that fixes the context problem
-  const handler = (evSheet, _form, { unlocked }) => {
-    if (evSheet !== sheet) return;
-    isEditMode = unlocked;
-  };
-
-  Hooks.on("tidy5e-sheet.sheetModeConfiguring", handler);
-  $effect(() => {
-    return () => Hooks.off("tidy5e-sheet.sheetModeConfiguring", handler);
-  });
 
   const showToUserEditMode = $derived.by(() => {
     version;
@@ -185,27 +185,27 @@
 
   const editCategory = updatesVersion(
     async (category: string) =>
-      await TrackingAndTraining.editCategory(sheet.actor.id!, category)
+      await TrackingAndTraining.editCategory($sheet.actor.id!, category)
   );
   const deleteCategory = updatesVersion(
     async (category: string) =>
-      await TrackingAndTraining.deleteCategory(sheet.actor.id!, category)
+      await TrackingAndTraining.deleteCategory($sheet.actor.id!, category)
   );
   const editActivity = updatesVersion(
     async (itemId: string) =>
       await TrackingAndTraining.editFromSheet(
-        sheet.actor.id!,
+        $sheet.actor.id!,
         itemId,
         dropdownOptions
       )
   );
   const deleteActivity = updatesVersion(
     async (itemId: string) =>
-      await TrackingAndTraining.deleteFromSheet(sheet.actor.id!, itemId)
+      await TrackingAndTraining.deleteFromSheet($sheet.actor.id!, itemId)
   );
   const rollActivity = updatesVersion(
     async (itemId: string) =>
-      await TrackingAndTraining.progressItem(sheet.actor.id!, itemId)
+      await TrackingAndTraining.progressItem($sheet.actor.id!, itemId)
   );
 
   const setProgress = updatesVersion(
@@ -225,16 +225,16 @@
 
   const editWorldCategory = updatesVersion(
     async (category: string) =>
-      await TrackingAndTraining.editCategory(sheet.actor.id!, category, true)
+      await TrackingAndTraining.editCategory($sheet.actor.id!, category, true)
   );
   const deleteWorldCategory = updatesVersion(
     async (category: string) =>
-      await TrackingAndTraining.deleteCategory(sheet.actor.id!, category, true)
+      await TrackingAndTraining.deleteCategory($sheet.actor.id!, category, true)
   );
   const editWorldActivity = updatesVersion(
     async (itemId: string) =>
       await TrackingAndTraining.editFromSheet(
-        sheet.actor.id!,
+        $sheet.actor.id!,
         itemId,
         dropdownOptions,
         true
@@ -242,10 +242,10 @@
   );
   const deleteWorldActivity = updatesVersion(
     async (itemId: string) =>
-      await TrackingAndTraining.deleteFromSheet(sheet.actor.id!, itemId, true)
+      await TrackingAndTraining.deleteFromSheet($sheet.actor.id!, itemId, true)
   );
   const rollWorldActivity = updatesVersion(async (itemId: string) =>
-    TrackingAndTraining.progressItem(sheet.actor.id!, itemId, true)
+    TrackingAndTraining.progressItem($sheet.actor.id!, itemId, true)
   );
   const setWorldProgress = updatesVersion(
     async ({ id, progress }: { id: string; progress: number }) => {
@@ -386,7 +386,7 @@
   {#if uncategorizedActorActivities.activities.length}
     <TidyActivitiesTable
       {actor}
-      {isEditMode}
+      isEditMode={$isEditMode}
       category={uncategorizedActorActivities}
       onEditCategory={(catId) => editCategory(catId)}
       onDeleteCategory={(catId) => deleteCategory(catId)}
@@ -402,7 +402,7 @@
   {#each categorizedActorActivities as category (category.id)}
     <TidyActivitiesTable
       {actor}
-      {isEditMode}
+      isEditMode={$isEditMode}
       {category}
       onEditCategory={(catId) => editCategory(catId)}
       onDeleteCategory={(catId) => deleteCategory(catId)}
@@ -426,7 +426,7 @@
 <div class="items-list downtime-list">
   {#if uncategorizedWorldActivities.activities.length}
     <TidyActivitiesTable
-      {isEditMode}
+      isEditMode={$isEditMode}
       category={uncategorizedWorldActivities}
       onEditCategory={(catId) => editWorldCategory(catId)}
       onDeleteCategory={(catId) => deleteWorldCategory(catId)}
@@ -441,7 +441,7 @@
 
   {#each categorizedWorldActivities as category (category.id)}
     <TidyActivitiesTable
-      {isEditMode}
+      isEditMode={$isEditMode}
       {category}
       onEditCategory={(catId) => editWorldCategory(catId)}
       onDeleteCategory={(catId) => deleteWorldCategory(catId)}

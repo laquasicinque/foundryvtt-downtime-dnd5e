@@ -5,7 +5,7 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
   import type { HTMLAttributes } from "svelte/elements";
-  import { Iter } from "../../../utils/iterables/Iter";
+  import { Iter } from "it-al";
   type TidyTableProps = {
     key: string;
     dataset?: Record<string, string>;

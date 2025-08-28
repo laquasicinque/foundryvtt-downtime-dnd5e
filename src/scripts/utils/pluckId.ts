@@ -1,3 +1,3 @@
-import { pluck } from "./iterables/pluck";
+import { pluck } from "it-al";
 
-export const pluckId = pluck('id')
+export const pluckId = pluck("id");

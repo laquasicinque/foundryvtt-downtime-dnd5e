@@ -5,7 +5,7 @@
   import DndTableRow from "../components/DndTableRow.svelte";
   import DndTablePrimaryCell from "../components/DndTablePrimaryCell.svelte";
   import DndTableCell from "../components/DndTableCell.svelte";
-  import { Iter } from "../utils/iterables/Iter";
+  import { Iter } from "it-al";
   import ApplicationForm from "../components/ApplicationForm.svelte";
 
   type AuditLogAppProps = {

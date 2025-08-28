@@ -4,7 +4,7 @@
   import CONSTANTS from "../constants";
   import { localize } from "../utils/localize";
   import type { ObjectUnionMerged } from "../types";
-  import { pluck } from "../utils/iterables/pluck";
+  import { pluck } from "it-al";
   import ApplicationForm, { type WithApplicationFormProps } from "../components/ApplicationForm.svelte";
 
   type TrackedItemAppProps = WithApplicationFormProps<{

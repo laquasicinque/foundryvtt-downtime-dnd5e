@@ -3,7 +3,7 @@
   import { type TableContextValue, type MaybeGetter } from "../types";
   import type { ColumnNormalized } from "./DndTable.svelte";
   import type { HTMLLiAttributes } from "svelte/elements";
-  import { Iter } from "../utils/iterables/Iter";
+  import { Iter } from "it-al";
 
   type DndTableRow = {
     children?: Function;

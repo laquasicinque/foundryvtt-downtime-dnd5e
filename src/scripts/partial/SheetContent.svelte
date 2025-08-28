@@ -13,7 +13,7 @@
     getWorldActivitiesMap,
   } from "../utils/activities";
   import WorldActivityButtons from "./WorldActivityButtons.svelte";
-  import { map } from "../utils/iterables/map";
+  import { map } from "it-al";
   import { clamp } from "../utils/clamp";
   import { preventDefault } from "../utils/preventDefault";
   import AuditLogApp from "../apps/AuditLogApp.js";

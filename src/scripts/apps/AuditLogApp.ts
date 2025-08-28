@@ -1,7 +1,7 @@
 import type { DeepPartial } from "../types";
 import { getActorActivities, setActorActivities } from "../utils/activities";
 import { getActor } from "../utils/getActor";
-import { Iter } from "../utils/iterables/Iter";
+import { Iter } from "it-al";
 import {
   SvelteApplicationMixin,
   type Configuration,
