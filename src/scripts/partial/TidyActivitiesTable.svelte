@@ -16,6 +16,7 @@
     category: Downtime.CategoryWithActivities;
     categoryControls?: boolean;
     isEditMode?: boolean;
+    showToUserEditMode?: boolean;
     actor?: dnd5e.documents.Actor5e<"character">;
 
     onEditCategory?: (categoryId: string) => void;
@@ -41,6 +42,7 @@
   const {
     category,
     categoryControls,
+    showToUserEditMode,
     actor,
     onEditCategory,
     onDeleteCategory,
@@ -71,9 +73,10 @@
     return Boolean(openStates.get(id));
   };
 
-  const toggle = (activity: Downtime.TrackedItem | string) => {
-    const id = typeof activity === "string" ? activity : activity.id;
-    openStates.set(id, !openStates.get(id));
+  const toggle = (activity: Downtime.TrackedItem) => {
+    const id = activity.id
+    // toggle unless there's no description
+    openStates.set(id, !openStates.get(id) && !!activity.description.trim());
     return Boolean(openStates.get(id));
   };
 
@@ -104,18 +107,22 @@
       <TidyTableHeaderCell>Type</TidyTableHeaderCell>
       <TidyTableHeaderCell></TidyTableHeaderCell>
       <TidyTableHeaderCell>Progress</TidyTableHeaderCell>
-      <TidyTableHeaderCell class={{ "header-cell-actions": !isEditMode }}>
-        {#if isEditMode}
-          <a class="tidy-table-button" title="Create Effect"
-            ><i class="fas fa-edit"></i></a
-          >
-          <a class="tidy-table-button" title="Create Effect"
-            ><i class="fas fa-trash"></i></a
-          >
-        {:else}
-          <a class="tidy-table-button" title="Create Effect"
-            ><i class="fas fa-plus"></i></a
-          >
+      <TidyTableHeaderCell class={{ "header-cell-actions": !isEditMode || !(onEditCategory && onDeleteCategory) }}>
+        {#if showToUserEditMode}
+            {#if isEditMode && onEditCategory && onDeleteCategory}
+            <a class="tidy-table-button" title="Edit Category"
+                onclick={preventDefault((e) => onEditCategory?.(category.id))}
+                ><i class="fas fa-edit"></i></a
+            >
+            <a class="tidy-table-button" title="Delete Category"
+            onclick={preventDefault((e) => onDeleteCategory?.(category.id))}
+                ><i class="fas fa-trash"></i></a
+            >
+            {:else}
+            <a class="tidy-table-button" title="Add Activity"
+                ><i class="fas fa-plus"></i></a
+            >
+            {/if}
         {/if}
       </TidyTableHeaderCell>
     </TidyTableHeaderRow>
@@ -151,12 +158,14 @@
                 {activity.name}
               </span>
             </span>
+            {#if activity.description}
             <span class="row-detail-expand-indicator"
               ><i
                 class="fa-solid fa-angle-right expand-indicator"
                 class:expanded={isOpen(activity)}
               ></i>
             </span>
+            {/if}
           </span>
         </TidyTableCell>
         <TidyTableCell>{activity.progressionStyle}</TidyTableCell>
@@ -259,5 +268,9 @@
 
   .tidy-table-row-use-button span {
     position: absolute;
+  }
+
+  h3 {
+    margin-left: 4px;
   }
 </style>

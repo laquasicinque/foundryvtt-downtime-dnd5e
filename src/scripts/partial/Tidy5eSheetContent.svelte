@@ -35,13 +35,18 @@
     actor.id!
   );
 
-  let isEditMode = $derived(sheet._context.data.unlocked);
+  let isEditMode = $derived.by(subs(() => sheet._context.data.unlocked));
 
-  const showToUserEditMode = $derived.by(subs(() =>  (
-      !settings.gmOnlyEditMode &&
-      !game.users?.current?.isGM
+  const showToUserEditMode = $derived.by(
+    subs(
+      () => {
+        const isGM = game.users?.current?.isGM ?? false
+        const { gmOnlyEditMode } = settings
+        if (gmOnlyEditMode && !isGM) return false
+        return true
+      }
     )
-  ));
+  );
   const showImportButton = $derived.by(subs(() =>settings.showImportButton));
 
   const categoriesActor = $derived.by(subs(() =>getActorCategories(actor)));
@@ -358,10 +363,9 @@
   {#if uncategorizedActorActivities.activities.length}
     <TidyActivitiesTable
       {actor}
+      {showToUserEditMode}
       isEditMode={isEditMode}
       category={uncategorizedActorActivities}
-      onEditCategory={(catId) => editCategory(catId)}
-      onDeleteCategory={(catId) => deleteCategory(catId)}
       onEditActivity={(itemId) => editActivity(itemId)}
       onDeleteActivity={(itemId) => deleteActivity(itemId)}
       onRollActivity={(itemId) => rollActivity(itemId)}
@@ -374,6 +378,7 @@
   {#each categorizedActorActivities as category (category.id)}
     <TidyActivitiesTable
       {actor}
+      {showToUserEditMode}
       isEditMode={isEditMode}
       {category}
       onEditCategory={(catId) => editCategory(catId)}
@@ -398,10 +403,9 @@
 <div class="items-list downtime-list">
   {#if uncategorizedWorldActivities.activities.length}
     <TidyActivitiesTable
-      isEditMode={isEditMode}
+      {isEditMode}
+      {showToUserEditMode}
       category={uncategorizedWorldActivities}
-      onEditCategory={(catId) => editWorldCategory(catId)}
-      onDeleteCategory={(catId) => deleteWorldCategory(catId)}
       onEditActivity={(itemId) => editWorldActivity(itemId)}
       onDeleteActivity={(itemId) => deleteWorldActivity(itemId)}
       onRollActivity={(itemId) => rollWorldActivity(itemId)}
@@ -413,7 +417,8 @@
 
   {#each categorizedWorldActivities as category (category.id)}
     <TidyActivitiesTable
-      isEditMode={isEditMode}
+      {isEditMode}
+      {showToUserEditMode}
       {category}
       onEditCategory={(catId) => editWorldCategory(catId)}
       onDeleteCategory={(catId) => deleteWorldCategory(catId)}

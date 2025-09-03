@@ -31,11 +31,13 @@
   progress::-webkit-progress-value {
     background: linear-gradient(to right, #1c374a 0%, #3b72a6 100%);
     border-radius: 2px;
-  }
+    transition: all 0.3s ease-in-out;
+}
 
-  progress::-moz-progress-bar {
+progress::-moz-progress-bar {
     background: linear-gradient(to right, #1c374a 0%, #3b72a6 100%);
     border-radius: 2px;
+    transition: all 0.3s ease-in-out;
   }
 
   progress::-webkit-progress-bar,

@@ -33,7 +33,7 @@ export function registerTidy5eSheet(
             target,
             props: {
               actor: data.actor,
-              sheet: data.sheet,
+              sheet: app,
             },
           }),
         );
