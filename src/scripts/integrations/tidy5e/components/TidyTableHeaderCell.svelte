@@ -26,7 +26,7 @@
 </script>
 
 <div
-  class={['tidy-table-header-cell', cssClass, hideUnderClass, { primary }]}
+  class={['tidy-table-header-cell header-label-cell', cssClass, hideUnderClass, { primary }]}
   data-tidy-sheet-part={"table-header-cell"}
   style:--tidy-table-column-width={columnWidth}
   {title}

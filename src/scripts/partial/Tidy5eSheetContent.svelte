@@ -24,10 +24,9 @@
   const {
     actor,
     sheet: sheetRaw,
-  }: { sheet: any; actor: dnd5e.documents.Actor5e<"character">; context: any } =
+  }: { sheet: any; actor: dnd5e.documents.Actor5e<"character"> } =
     $props();
 
-    console.log({sheetRaw})
   const { pubs, subs } = getSheetFns(sheetRaw);
 
   const sheet = $derived.by(subs(()=>sheetRaw))
@@ -298,16 +297,7 @@ type AnyFunction = (...args:any[]) => any
 
 <div class="downtime-controls">
   <div>
-    <button
-      type="button"
-      class="button downtime-dnd5e-export"
-      title={localize("downtime-dnd5e.ExportTrackedItemsTooltip")}
-      onclick={preventDefault(exportTrackedItems)}
-    >
-      <i class="fas fa-file-import"></i>
-      {localize("downtime-dnd5e.ExportTrackedItems")}
-    </button>
-    {#if showImportButton}
+     {#if showImportButton}
       <button
         type="button"
         class="button downtime-dnd5e-import"
@@ -318,6 +308,15 @@ type AnyFunction = (...args:any[]) => any
         {localize("downtime-dnd5e.ImportTrackedItems")}
       </button>
     {/if}
+    <button
+      type="button"
+      class="button downtime-dnd5e-export"
+      title={localize("downtime-dnd5e.ExportTrackedItemsTooltip")}
+      onclick={preventDefault(exportTrackedItems)}
+    >
+      <i class="fas fa-file-import"></i>
+      {localize("downtime-dnd5e.ExportTrackedItems")}
+    </button>
   </div>
   <button
     type="button"
@@ -431,6 +430,12 @@ type AnyFunction = (...args:any[]) => any
 </div>
 
 <style>
+    .downtime-controls {
+        display: flex;
+        flex-flow: row;
+        justify-content: space-between;
+        padding: 0 2px;
+    }
   .downtime-dnd5e-controls {
     display: flex;
     align-items: flex-start;

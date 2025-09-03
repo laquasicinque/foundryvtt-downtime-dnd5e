@@ -410,8 +410,13 @@
     justify-content: space-between;
   }
 
+  .downtime-controls div {
+    display: flex;
+  }
+
   .downtime-controls button {
     font-size: 10px;
     padding: 0 8px;
+    margin: 1px;
   }
 </style>

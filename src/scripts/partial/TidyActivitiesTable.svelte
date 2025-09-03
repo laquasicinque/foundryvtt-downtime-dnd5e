@@ -254,6 +254,10 @@
     overflow: hidden;
     position: relative;
     transition: all var(--t5e-transition-default);
-    padding: 0;
+    padding: 0 !important;
+  }
+
+  .tidy-table-row-use-button span {
+    position: absolute;
   }
 </style>
