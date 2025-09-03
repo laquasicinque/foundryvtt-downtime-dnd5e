@@ -1,6 +1,5 @@
 <script lang="ts">
   import ActorActivityButtons from "./ActorActivityButtons.svelte";
-  import CONSTANTS from "../constants";
   import { localize } from "../utils/localize";
   import { TrackingAndTraining } from "../TrackingAndTraining";
   import ActivitiesTable from "./ActivitiesTable.svelte";
@@ -17,26 +16,40 @@
   import { clamp } from "../utils/clamp";
   import { preventDefault } from "../utils/preventDefault";
   import AuditLogApp from "../apps/AuditLogApp.js";
+  import { getSheetFns } from "../lib/reactiveSheet.svelte";
+  import { settings } from "../utils/settings";
 
-  const { isEditMode, sheet, actor } = $props();
+  type Props = {
+    isEditMode: boolean,
+    sheet: Downtime.ActorSheetApplication,
+    actor: dnd5e.documents.Actor5e<'character'>
+  }
+
+  const { isEditMode, sheet: sheetRaw, actor }: Props = $props();
+  const { pubs, subs } = getSheetFns(sheetRaw);
+
+  const sheet = $derived.by(subs(() => sheetRaw));
+
 
   const dropdownOptions = TrackingAndTraining.getDowntimeDropdownOptions(
     actor.id!
   );
-
-  const showToUserEditMode =
-    !game.settings.get(CONSTANTS.MODULE_ID, "gmOnlyEditMode") &&
-    !game.users?.current?.isGM;
-  const showImportButton = game.settings.get(
-    CONSTANTS.MODULE_ID,
-    "showImportButton"
+  const showToUserEditMode = $derived.by(
+    subs(
+      () =>
+        !settings.gmOnlyEditMode &&
+        !game.users?.current?.isGM
+    )
+  );
+  const showImportButton = $derived.by(
+    subs(() => settings.showImportButton)
   );
 
-  const categoriesActor = getActorCategories(actor);
-  const categoriesWorld = getWorldCategories();
+  const categoriesActor = $derived.by(subs(() => getActorCategories(actor)));
+  const categoriesWorld = $derived.by(subs(() =>  getWorldCategories()));
 
-  const categoriesActorIds = new Set(pluckId(categoriesActor));
-  const categoriesWorldIds = new Set(pluckId(categoriesActor));
+  const categoriesActorIds = $derived(new Set(pluckId(categoriesActor)));
+  const categoriesWorldIds = $derived(new Set(pluckId(categoriesActor)));
 
   const appendDc = (str: string, activity: Downtime.TrackedItem) => {
     if (!activity.dc) return str;
@@ -75,20 +88,29 @@
     isComplete: act.progress >= act.completionAt,
   }));
 
-  const activitiesActor = getActorActivities(actor);
-  const formattedActorActivities = [...mapFormatActivities(activitiesActor)];
+  const activitiesActor = $derived.by(subs(() => getActorActivities(actor)));
 
-  const activitiesWorld = getWorldActivities();
-  const formattedWorldActivities = [...mapFormatActivities(activitiesWorld)];
+  const formattedActorActivities = $derived([
+    ...mapFormatActivities(activitiesActor),
+  ]);
 
-  const activitiesActorUncategorized = formattedActorActivities.filter(
-    (activity) =>
-      !(activity.category && categoriesActorIds.has(activity.category))
+  const activitiesWorld = $derived.by(subs(() => getWorldActivities()));
+  const formattedWorldActivities = $derived([
+    ...mapFormatActivities(activitiesWorld),
+  ]);
+
+  const activitiesActorUncategorized = $derived(
+    formattedActorActivities.filter(
+      (activity) =>
+        !(activity.category && categoriesActorIds.has(activity.category))
+    )
   );
 
-  const activitiesWorldUncategorized = formattedWorldActivities.filter(
-    (activity) =>
-      !(activity.category && categoriesWorldIds.has(activity.category))
+  const activitiesWorldUncategorized = $derived(
+    formattedWorldActivities.filter(
+      (activity) =>
+        !(activity.category && categoriesWorldIds.has(activity.category))
+    )
   );
 
   const categorizedActorActivities = $derived(
@@ -133,78 +155,85 @@
     activities: activitiesWorldUncategorized,
   } as Downtime.CategoryWithActivities);
 
-  const hasCharacterDowntimes = $derived(
-    !!uncategorizedActorActivities.activities.length ||
-      categorizedActorActivities.some((x) => x.activities.length)
+  const editCategory = pubs(
+    async (category: string) =>
+      await TrackingAndTraining.editCategory(sheet.actor.id!, category)
+  );
+  const deleteCategory = pubs(
+    async (category: string) =>
+      await TrackingAndTraining.deleteCategory(sheet.actor.id!, category)
+  );
+  const editActivity = pubs(
+    async (itemId: string) =>
+      await TrackingAndTraining.editFromSheet(
+        sheet.actor.id!,
+        itemId,
+        dropdownOptions
+      )
+  );
+  const deleteActivity = pubs(
+    async (itemId: string) =>
+      await TrackingAndTraining.deleteFromSheet(sheet.actor.id!, itemId)
+  );
+  const rollActivity = pubs(
+    async (itemId: string) =>
+      await TrackingAndTraining.progressItem(sheet.actor.id!, itemId)
   );
 
-  const hasWorldDowntimes = $derived(
-    !!uncategorizedWorldActivities.activities.length ||
-      categorizedWorldActivities.some((x) => x.activities.length)
+  const setProgress = pubs(
+    async ({ id, progress }: { id: string; progress: number }) => {
+      const items = getActorActivitiesMap(actor);
+      const item = items.get(id);
+      if (!item) return;
+
+      const clampedProgress = clamp(progress, item.completionAt);
+      await TrackingAndTraining.updateItemProgressFromSheet(
+        actor.id!,
+        id,
+        clampedProgress.toNearest(1).toString()
+      );
+    }
   );
 
-  const editCategory = async (category: string) =>
-    await TrackingAndTraining.editCategory(sheet.actor.id!, category);
-  const deleteCategory = async (category: string) =>
-    await TrackingAndTraining.deleteCategory(sheet.actor.id!, category);
-  const editActivity = async (itemId: string) =>
-    await TrackingAndTraining.editFromSheet(
-      sheet.actor.id!,
-      itemId,
-      dropdownOptions
-    );
-  const deleteActivity = async (itemId: string) =>
-    await TrackingAndTraining.deleteFromSheet(sheet.actor.id!, itemId);
-  const rollActivity = async (itemId: string) =>
-    TrackingAndTraining.progressItem(sheet.actor.id!, itemId);
-  const setProgress = ({ id, progress }: { id: string; progress: number }) => {
-    const items = getActorActivitiesMap(actor);
-    const item = items.get(id);
+  const editWorldCategory = pubs(
+    async (category: string) =>
+      await TrackingAndTraining.editCategory(sheet.actor.id!, category, true)
+  );
+  const deleteWorldCategory = pubs(
+    async (category: string) =>
+      await TrackingAndTraining.deleteCategory(sheet.actor.id!, category, true)
+  );
+  const editWorldActivity = pubs(
+    async (itemId: string) =>
+      await TrackingAndTraining.editFromSheet(
+        sheet.actor.id!,
+        itemId,
+        dropdownOptions,
+        true
+      )
+  );
+  const deleteWorldActivity = pubs(
+    async (itemId: string) =>
+      await TrackingAndTraining.deleteFromSheet(sheet.actor.id!, itemId, true)
+  );
+  const rollWorldActivity = pubs(async (itemId: string) =>
+    TrackingAndTraining.progressItem(sheet.actor.id!, itemId, true)
+  );
+  const setWorldProgress = pubs(
+    async ({ id, progress }: { id: string; progress: number }) => {
+      const items = getWorldActivitiesMap();
+      const item = items.get(id);
+      if (!item) return;
 
-    if (!item) return;
-
-    const clampedProgress = clamp(progress, item.completionAt);
-    TrackingAndTraining.updateItemProgressFromSheet(
-      actor.id!,
-      id,
-      clampedProgress.toNearest(1).toString()
-    );
-  };
-
-  const editWorldCategory = async (category: string) =>
-    await TrackingAndTraining.editCategory(sheet.actor.id!, category, true);
-  const deleteWorldCategory = async (category: string) =>
-    await TrackingAndTraining.deleteCategory(sheet.actor.id!, category, true);
-  const editWorldActivity = async (itemId: string) =>
-    await TrackingAndTraining.editFromSheet(
-      sheet.actor.id!,
-      itemId,
-      dropdownOptions,
-      true
-    );
-  const deleteWorldActivity = async (itemId: string) =>
-    await TrackingAndTraining.deleteFromSheet(sheet.actor.id!, itemId, true);
-  const rollWorldActivity = async (itemId: string) =>
-    TrackingAndTraining.progressItem(sheet.actor.id!, itemId, true);
-  const setWorldProgress = ({
-    id,
-    progress,
-  }: {
-    id: string;
-    progress: number;
-  }) => {
-    const items = getWorldActivitiesMap();
-    const item = items.get(id);
-    if (!item) return;
-
-    const clampedProgress = clamp(progress, item.completionAt);
-    TrackingAndTraining.updateItemProgressFromSheet(
-      actor.id!,
-      id,
-      clampedProgress.toNearest(1).toString(),
-      true
-    );
-  };
+      const clampedProgress = clamp(progress, item.completionAt);
+      await TrackingAndTraining.updateItemProgressFromSheet(
+        actor.id!,
+        id,
+        clampedProgress.toNearest(1).toString(),
+        true
+      );
+    }
+  );
 
   const onDragStart = ({
     event,
@@ -219,29 +248,31 @@
     event.dataTransfer?.setData("text/plain", JSON.stringify(dragData));
   };
 
-  const onDrop = ({
-    event,
-    actor,
-    activity,
-  }: {
-    event: DragEvent;
-    actor?: string;
-    activity: Downtime.TrackedItem;
-  }) => {
-    const payload = foundry.applications.ux.TextEditor.getDragEventData(
-      event
-    ) as { type: string; activity: { id: string }; actor: string };
-    if (payload.type !== "downtime-activity") return;
-    event.preventDefault();
-    event.stopPropagation();
+  const onDrop = pubs(
+    async ({
+      event,
+      actor,
+      activity,
+    }: {
+      event: DragEvent;
+      actor?: string;
+      activity: Downtime.TrackedItem;
+    }) => {
+      const payload = foundry.applications.ux.TextEditor.getDragEventData(
+        event
+      ) as { type: string; activity: { id: string }; actor: string };
+      if (payload.type !== "downtime-activity") return;
+      event.preventDefault();
+      event.stopPropagation();
 
-    TrackingAndTraining.moveActivity({
-      sourceId: payload.activity.id,
-      targetId: activity.id,
-      targetActorId: actor,
-      sourceActorId: payload.actor,
-    });
-  };
+      await TrackingAndTraining.moveActivity({
+        sourceId: payload.activity.id,
+        targetId: activity.id,
+        targetActorId: actor,
+        sourceActorId: payload.actor,
+      });
+    }
+  );
 
   function exportTrackedItems() {
     return TrackingAndTraining.exportItems(actor.id!);
@@ -255,8 +286,8 @@
   }
 </script>
 
-  <div class="downtime-controls">
-    <div>
+<div class="downtime-controls">
+  <div>
     <button
       type="button"
       class="button downtime-dnd5e-export"
@@ -277,20 +308,20 @@
         {localize("downtime-dnd5e.ImportTrackedItems")}
       </button>
     {/if}
-    </div>
-    <button
-      type="button"
-      class="button downtime-dnd5e-audit"
-      title={localize("downtime-dnd5e.ReviewChanges")}
-      onclick={preventDefault(openChangeLog)}
-    >
-      <i class="fas fa-clipboard"></i>
-      {localize("downtime-dnd5e.ChangeLog")}
-    </button>
   </div>
+  <button
+    type="button"
+    class="button downtime-dnd5e-audit"
+    title={localize("downtime-dnd5e.ReviewChanges")}
+    onclick={preventDefault(openChangeLog)}
+  >
+    <i class="fas fa-clipboard"></i>
+    {localize("downtime-dnd5e.ChangeLog")}
+  </button>
+</div>
 
 {#if !showToUserEditMode}
-  <ActorActivityButtons {actor} {showImportButton}>
+  <ActorActivityButtons {actor}>
     <h4>Character Downtimes</h4>
   </ActorActivityButtons>
 {/if}
@@ -370,17 +401,17 @@
 </section>
 
 <style>
-    section {
-        gap: 16px;
-    }
+  section {
+    gap: 16px;
+  }
 
-    .downtime-controls {
-        display: flex;
-        justify-content: space-between;
-    }
+  .downtime-controls {
+    display: flex;
+    justify-content: space-between;
+  }
 
-    .downtime-controls button {
-        font-size: 10px;
-        padding: 0 8px;
-    }
+  .downtime-controls button {
+    font-size: 10px;
+    padding: 0 8px;
+  }
 </style>

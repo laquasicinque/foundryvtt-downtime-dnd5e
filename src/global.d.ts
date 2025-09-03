@@ -1,3 +1,6 @@
+import type { GMConfig } from "./scripts/apps/GMConfigDialog";
+import type { ResetSettingsDialog } from "./scripts/apps/ResetSettingsDialog";
+
 declare global {
   namespace Hooks {
     interface HookConfig {
@@ -105,8 +108,8 @@ declare module "fvtt-types/configuration" {
   }
 
   interface SettingConfig {
-    "downtime-dnd5e.resetAllSettings": unknown;
-    "downtime-dnd5e.config": unknown;
+    "downtime-dnd5e.resetAllSettings": typeof ResetSettingsDialog;
+    "downtime-dnd5e.config": typeof GMConfig;
     "downtime-dnd5e.lastMigrationApplied": number;
     "downtime-dnd5e.showImportButton": boolean;
     "downtime-dnd5e.gmOnlyMode": boolean;
@@ -127,6 +130,7 @@ declare module "fvtt-types/configuration" {
       "downtime-dnd5e": {
         trainingItems: Downtime.TrackedItem[];
         categories: Downtime.Category[];
+        backup: Downtime.TrackedItem[];
       };
     };
   }

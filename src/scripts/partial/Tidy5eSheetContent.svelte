@@ -19,6 +19,7 @@
   import { clamp } from "../utils/clamp";
   import { preventDefault } from "../utils/preventDefault";
   import { derived } from "svelte/store";
+  import { settings } from "../utils/settings;
 
   const {
     actor,
@@ -40,6 +41,7 @@
     context,
     ($context: any) => $context.data.unlocked
   );
+type AnyFunction = (...args:any[]) => any
 
   const version = $state(0)
 
@@ -54,13 +56,13 @@
   const showToUserEditMode = $derived.by(() => {
     version;
     return (
-      !game.settings.get(CONSTANTS.MODULE_ID, "gmOnlyEditMode") &&
+      !settings.gmOnlyEditMode &&
       !game.users?.current?.isGM
     );
   });
   const showImportButton = $derived.by(() => {
     version;
-    return game.settings.get(CONSTANTS.MODULE_ID, "showImportButton");
+    return settings.showImportButton
   });
 
   const categoriesActor = $derived.by(() => {

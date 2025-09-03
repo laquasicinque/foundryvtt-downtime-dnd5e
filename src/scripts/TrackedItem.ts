@@ -1,6 +1,6 @@
-import CONSTANTS from "./constants.js";
 import type { OnlySelectedPartial, UnionSameKeys } from "./types.js";
 import { localize } from "./utils/localize.js";
+import { settings } from "./utils/settings.js";
 
 export function createTrackedItem<T extends Downtime.TrackedItem>(
   options: OnlySelectedPartial<T, UnionSameKeys<T>>,
@@ -10,11 +10,11 @@ export function createTrackedItem<T extends Downtime.TrackedItem>(
     category: "",
     description: "",
     progress: 0,
-    completionAt: game.settings.get(CONSTANTS.MODULE_ID, "totalToComplete"),
+    completionAt: settings.totalToComplete,
     changes: [],
     schemaVersion: 1,
     ...options,
-    name: options.name || localize("downtime-dnd5e.NewItem"),
-    img: options.img || "icons/svg/book.svg",
+    name: options.name?.trim() || localize("downtime-dnd5e.NewItem"),
+    img: options.img?.trim() || "icons/svg/book.svg",
   } as unknown as T;
 }

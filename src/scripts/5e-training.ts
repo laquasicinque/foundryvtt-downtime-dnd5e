@@ -4,10 +4,22 @@ import { migrateToVersion1 } from "./migrations/migrationNumber1.js";
 import CONSTANTS from "./constants.js";
 import API from "./api.js";
 import Logger from "./lib/Logger.js";
-import { getActorActivities } from "./utils/activities.js";
+import { getActorActivities, getWorldActivities } from "./utils/activities.js";
 import { getActorCategories, getWorldCategories } from "./utils/categories.js";
 import { localize } from "./utils/localize.js";
 import { pluckId } from "./utils/pluckId.js";
+import { mount, unmount } from "svelte";
+import { registerTidy5eSheet } from "./integrations/tidy5e/tidy5e.js";
+import {
+  getSvelteElement,
+  triggerUpdates,
+  ensureSheetStoredValues,
+  setSvelteInstance,
+  setSvelteElement,
+  getSvelteInstance,
+} from "./lib/reactiveSheet.svelte.js";
+import SheetContent from "./partial/SheetContent.svelte";
+import { settings, settings } from "./utils/settings.js";
 
 // Register Game Settings
 export const initHooks = () => {
@@ -17,7 +29,62 @@ export const initHooks = () => {
 };
 
 export const setupHooks = () => {
-  // Logger.warn("Setup Hooks processing");
+  Hooks.on(
+    "renderActorSheetV2",
+    (
+      sheet: Downtime.ActorSheetApplication,
+      form: HTMLFormElement,
+      context,
+      options,
+    ) => {
+      const downtimeTab = form.querySelector(
+        'section[data-tab="downtime-dnd5e"]',
+      );
+      const mountRoot = downtimeTab?.querySelector("[data-svelte]");
+      const tabs = form.querySelector('[data-container-id="tabs"]');
+
+      if (tabs && downtimeTab && mountRoot) {
+        tabs.append(downtimeTab);
+        const element = getSvelteElement(sheet);
+        if (element) {
+          mountRoot.replaceWith(element);
+          triggerUpdates(sheet);
+          return;
+        }
+        ensureSheetStoredValues(sheet);
+        setSvelteInstance(
+          sheet,
+          mount(SheetContent, {
+            target: mountRoot,
+            props: {
+              sheet,
+              isEditMode: sheet["_mode"] === sheet.constructor.MODES.EDIT,
+              actor: sheet.actor,
+            },
+          }),
+        );
+        setSvelteElement(sheet, mountRoot as HTMLElement);
+      }
+    },
+  );
+
+  Hooks.on("closeActorSheetV2", (sheet: Downtime.ActorSheetApplication) => {
+    const instance = getSvelteInstance(sheet);
+    if (instance) {
+      unmount(instance);
+      setSvelteInstance(sheet, undefined);
+      setSvelteElement(sheet, undefined);
+    }
+  });
+
+  Hooks.on(
+    "tidy5e-sheet.ready",
+    (
+      api: import("tidy5e-sheet/src/api/Tidy5eSheetsApi.js").Tidy5eSheetsApi,
+    ) => {
+      registerTidy5eSheet(api);
+    },
+  );
 };
 
 export const readyHooks = () => {
@@ -60,12 +127,16 @@ function addTabsToCoreSheets() {
 async function addTrainingTab(
   app: Downtime.ActorSheetApplication,
   html: HTMLFormElement,
-  data: { actor: dnd5e.documents.Actor5e; isCharacter: boolean; isNPC: boolean },
+  data: {
+    actor: dnd5e.documents.Actor5e;
+    isCharacter: boolean;
+    isNPC: boolean;
+  },
 ) {
   // Determine if we should show the downtime tab
-  const enableCharacter = game.settings.get(CONSTANTS.MODULE_ID, "enableTraining");
-  const enableNpc = game.settings.get(CONSTANTS.MODULE_ID, "enableTrainingNpc");
-  const gmOnlyMode = game.settings.get(CONSTANTS.MODULE_ID, "gmOnlyMode");
+  const enableCharacter = settings.enableTraining;
+  const enableNpc = settings.enableTrainingNpc;
+  const gmOnlyMode = settings.gmOnlyMode;
 
   let showToUser = game.user.isGM || (app.object.isOwner && gmOnlyMode);
 
@@ -79,8 +150,9 @@ async function addTrainingTab(
 
 function getTemplateData(data) {
   const actor = data.actor;
-  const notShowToUserEditMode = game.settings.get(CONSTANTS.MODULE_ID, "gmOnlyEditMode") && !game.users?.current?.isGM;
-  const showImportButton = game.settings.get(CONSTANTS.MODULE_ID, "showImportButton");
+  const notShowToUserEditMode =
+    settings.gmOnlyEditMode && !game.users?.current?.isGM;
+  const showImportButton = settings.showImportButton;
 
   const categoriesActor = getActorCategories(actor);
   const categoriesWorld = getWorldCategories();
@@ -90,27 +162,40 @@ function getTemplateData(data) {
 
   const activities = getActorActivities(actor);
   let activitiesCategorized = activities.filter(
-    (activity) => activity.category && categoriesActorIds.includes(activity.category),
+    (activity) =>
+      activity.category && categoriesActorIds.includes(activity.category),
   );
   let activitiesUnCategorized = activities.filter(
-    (activity) => !activity.category || !categoriesActorIds.includes(activity.category),
+    (activity) =>
+      !activity.category || !categoriesActorIds.includes(activity.category),
   );
   if (!game.user.isGM) {
-    activitiesCategorized = activitiesCategorized.filter((activity) => !activity.hidden);
-    activitiesUnCategorized = activitiesUnCategorized.filter((activity) => !activity.hidden);
+    activitiesCategorized = activitiesCategorized.filter(
+      (activity) => !activity.hidden,
+    );
+    activitiesUnCategorized = activitiesUnCategorized.filter(
+      (activity) => !activity.hidden,
+    );
   }
 
-  let activitiesWorld = game.settings.get(CONSTANTS.MODULE_ID, CONSTANTS.SETTINGS.worldActivities) || [];
+  let activitiesWorld = getWorldActivities();
+
   let activitiesWorldCategorized = activitiesWorld.filter(
-    (activity) => activity.category && categoriesWorldIds.includes(activity.category),
+    (activity) =>
+      activity.category && categoriesWorldIds.includes(activity.category),
   );
   let activitiesWorldUnCategorized = activitiesWorld.filter(
-    (activity) => !activity.category || !categoriesWorldIds.includes(activity.category),
+    (activity) =>
+      !activity.category || !categoriesWorldIds.includes(activity.category),
   );
 
   if (!game.user.isGM) {
-    activitiesWorldCategorized = activitiesWorldCategorized.filter((activity) => !activity.hidden);
-    activitiesWorldUnCategorized = activitiesWorldUnCategorized.filter((activity) => !activity.hidden);
+    activitiesWorldCategorized = activitiesWorldCategorized.filter(
+      (activity) => !activity.hidden,
+    );
+    activitiesWorldUnCategorized = activitiesWorldUnCategorized.filter(
+      (activity) => !activity.hidden,
+    );
   }
 
   data.showImportButton = showImportButton;
@@ -131,16 +216,19 @@ function getTemplateData(data) {
 // If the setting for extra width is set, and if the sheet is of a type for which
 // we have training enabled, this returns true.
 function adjustSheetWidth(app: Downtime.ActorSheetApplication) {
-  let settingEnabled = !!game.settings.get(CONSTANTS.MODULE_ID, "extraSheetWidth");
+  let settingEnabled = !!settings.extraSheetWidth;
+
   let sheetHasTab =
-    (app.actor.type === "npc" && game.settings.get(CONSTANTS.MODULE_ID, "enableTrainingNpc")) ||
-    (app.actor.type === "character" && game.settings.get(CONSTANTS.MODULE_ID, "enableTraining"));
+    (app.actor.type === "npc" && settings.enableTrainingNpc) ||
+    (app.actor.type === "character" && settings.enableTraining);
   let currentWidth = app.position.width!;
   let defaultWidth = app.options.width!;
-  let sheetIsSmaller = currentWidth < defaultWidth + game.settings.get(CONSTANTS.MODULE_ID, "extraSheetWidth");
+  let sheetIsSmaller = currentWidth < defaultWidth + settings.extraSheetWidth;
   let sheetIsMonsterBlock = app.options.classes.includes("monsterblock");
 
-  return settingEnabled && sheetHasTab && sheetIsSmaller && !sheetIsMonsterBlock;
+  return (
+    settingEnabled && sheetHasTab && sheetIsSmaller && !sheetIsMonsterBlock
+  );
 }
 
 async function migrateAllActors() {
@@ -149,22 +237,24 @@ async function migrateAllActors() {
   let updatesRequired = [];
 
   // Start loop through actors
-  for (var i = 0; i < game.actors.contents.length; i++) {
-    const a = game.actors.contents[i];
-
+  const currentUserId = game.userId as string;
+  const currentUserIsGm = game.user.isGM;
+  for (const actor of game.actors.contents as Iterable<
+    dnd5e.documents.Actor5e<"character">
+  >) {
+    const currentUserOwnsActor =
+      actor.permission === CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER;
     // If the user can't update the actor, skip it
-    let currentUserId = game.userId;
-    let currentUserOwnsActor = a.permission[currentUserId] === 3;
-    let currentUserIsGm = game.user.isGM;
     if (!currentUserOwnsActor && !currentUserIsGm) {
-      Logger.debug(localize("downtime-dnd5e.Skipping") + ": " + a.data.name);
+      Logger.debug(localize("downtime-dnd5e.Skipping") + ": " + actor.name);
       continue;
     }
 
     // Flag items that need to be updated
     let itemsToUpdate = 0;
-    let allTrainingItems = a.getFlag(CONSTANTS.MODULE_ID, CONSTANTS.FLAGS.trainingItems) || [];
-    for (var j = 0; j < allTrainingItems.length; j++) {
+    const allTrainingItems = getActorActivities(actor);
+
+    for (let j = 0; j < allTrainingItems.length; j++) {
       let itemSchemaVersion = allTrainingItems[j].schemaVersion;
       if (itemSchemaVersion === undefined) {
         // Should only happen if it's coming from versions prior to 0.6.0
@@ -180,7 +270,7 @@ async function migrateAllActors() {
 
     // If items need to be updated, add them to the updatesRequired array
     if (itemsToUpdate > 0) {
-      updatesRequired.push({ actor: a, items: allTrainingItems });
+      updatesRequired.push({ actor: actor, items: allTrainingItems });
     }
   }
 
@@ -188,11 +278,11 @@ async function migrateAllActors() {
     // Prompt to see if the user wants to update their actors.
     let doUpdate = false;
     let content = `<h3>${localize("downtime-dnd5e.MigrationPromptTitle")}</h3>
-                   <p>${game.i18n.format("downtime-dnd5e.MigrationPromptText1")}</p>
+                   <p>${localize("downtime-dnd5e.MigrationPromptText1")}</p>
                    <h3>${localize("downtime-dnd5e.MigrationPromptBackupWarning")}</h3>
-                   <p>${game.i18n.format("downtime-dnd5e.MigrationPromptText2")}</p>
+                   <p>${localize("downtime-dnd5e.MigrationPromptText2")}</p>
                    <hr>
-                   <p>${game.i18n.format("downtime-dnd5e.MigrationPromptText3", { num: updatesRequired.length })}</p>`;
+                   <p>${localize("downtime-dnd5e.MigrationPromptText3", { num: String(updatesRequired.length) })}</p>`;
     // Insert dialog
     new Dialog({
       title: `${CONSTANTS.MODULE_ID}`,
@@ -219,32 +309,70 @@ async function migrateAllActors() {
             let allTrainingItems = thisUpdate.items;
 
             // Backup old data and store in backup flag
-            let backup = { trainingItems: allTrainingItems, timestamp: new Date() };
-            Logger.info(localize("downtime-dnd5e.BackingUpDataFor") + ": " + a.data.name, true);
-            Logger.debug(localize("downtime-dnd5e.BackingUpDataFor") + ": " + a.data.name);
-            await a.setFlag(CONSTANTS.MODULE_ID, CONSTANTS.FLAGS.backup, backup);
+            let backup = {
+              trainingItems: allTrainingItems,
+              timestamp: new Date(),
+            };
+            Logger.info(
+              localize("downtime-dnd5e.BackingUpDataFor") + ": " + a.data.name,
+              true,
+            );
+            Logger.debug(
+              localize("downtime-dnd5e.BackingUpDataFor") + ": " + a.data.name,
+            );
+            await a.setFlag(
+              CONSTANTS.MODULE_ID,
+              CONSTANTS.FLAGS.backup,
+              backup,
+            );
 
             // Alert that we're migrating actor
-            Logger.info(localize("downtime-dnd5e.UpdatingDataFor") + ": " + a.data.name, true);
-            Logger.debug(localize("downtime-dnd5e.UpdatingDataFor") + ": " + a.data.name);
+            Logger.info(
+              localize("downtime-dnd5e.UpdatingDataFor") + ": " + a.data.name,
+              true,
+            );
+            Logger.debug(
+              localize("downtime-dnd5e.UpdatingDataFor") + ": " + a.data.name,
+            );
 
             // Loop through items and update if they need updates
             for (var j = 0; j < allTrainingItems.length; j++) {
               if (allTrainingItems[j].updateMe) {
                 try {
                   if (allTrainingItems[j].schemaVersion < 1) {
-                    allTrainingItems[j] = migrateToVersion1(allTrainingItems[j]);
+                    allTrainingItems[j] = migrateToVersion1(
+                      allTrainingItems[j],
+                    );
                   }
                   // Repeat line for new versions as needed
                 } catch (err) {
-                  Logger.error(localize("downtime-dnd5e.ProblemUpdatingDataFor") + ": " + a.data.name, true, err);
+                  Logger.error(
+                    localize("downtime-dnd5e.ProblemUpdatingDataFor") +
+                      ": " +
+                      a.data.name,
+                    true,
+                    err,
+                  );
                 }
                 delete allTrainingItems[j].updateMe;
               }
             }
-            await a.setFlag(CONSTANTS.MODULE_ID, CONSTANTS.FLAGS.trainingItems, allTrainingItems);
-            Logger.info(localize("downtime-dnd5e.SuccessUpdatingDataFor") + ": " + a.data.name, true);
-            Logger.debug(localize("downtime-dnd5e.SuccessUpdatingDataFor") + ": " + a.data.name);
+            await a.setFlag(
+              CONSTANTS.MODULE_ID,
+              CONSTANTS.FLAGS.trainingItems,
+              allTrainingItems,
+            );
+            Logger.info(
+              localize("downtime-dnd5e.SuccessUpdatingDataFor") +
+                ": " +
+                a.data.name,
+              true,
+            );
+            Logger.debug(
+              localize("downtime-dnd5e.SuccessUpdatingDataFor") +
+                ": " +
+                a.data.name,
+            );
           }
         }
       },
@@ -252,89 +380,6 @@ async function migrateAllActors() {
   }
 }
 
-Hooks.on(`renderActorSheetV2`, (app: Downtime.ActorSheetApplication, html: JQuery, data: Record<string, unknown>) => {
-  if (tidy5eApi?.isTidy5eSheet?.(app)) {
-    return;
-  }
-
-  let widenSheet = adjustSheetWidth(app);
-  if (widenSheet) {
-    let newPos = { width: app.position.width + game.settings.get(CONSTANTS.MODULE_ID, "extraSheetWidth") };
-    app.setPosition(newPos);
-  }
-  addTrainingTab(app, html, data).then(function () {
-    if (app.activateTrainingTab) {
-      app._tabs[0].activate("training");
-    }
-  });
-});
-
 Hooks.on(`TrainingTabReady`, (app, html, data) => {
-  // Logger.log("Downtime tab ready!");
+  Logger.log("Downtime tab ready!");
 });
-
-/**
- * An instance of the Tidy 5e Sheet API.
- * This becomes available when the `tidy5e-sheet.ready` hook fires.
- */
-let tidy5eApi = undefined;
-
-Hooks.on("tidy5e-sheet.ready", (api) => {
-  tidy5eApi = api;
-  api.registerCharacterTab(
-    new api.models.HandlebarsTab({
-      tabId: "downtime-dnd5e-training-tab",
-      path: `modules/${CONSTANTS.MODULE_ID}/templates/partials/training-section-contents.hbs`,
-      title: () => game.settings.get(CONSTANTS.MODULE_ID, "tabName"),
-      getData: (data) => getTemplateData(data),
-      enabled: (data) => {
-        const showToUser = game.users.current.isGM || !game.settings.get(CONSTANTS.MODULE_ID, "gmOnlyMode");
-        return data.editable && showToUser && game.settings.get(CONSTANTS.MODULE_ID, "enableTraining");
-      },
-      onRender: ({ app, element, data }) => {
-        activateTabListeners(data.actor, app, $(element), data);
-      },
-      tabContentsClasses: ["downtime-dnd5e"],
-      activateDefaultSheetListeners: false,
-    }),
-  );
-  api.registerNpcTab(
-    new api.models.HandlebarsTab({
-      tabId: "downtime-dnd5e-training-tab",
-      path: `modules/${CONSTANTS.MODULE_ID}/templates/partials/training-section-contents.hbs`,
-      title: () => game.settings.get(CONSTANTS.MODULE_ID, "tabName"),
-      getData: (data) => getTemplateData(data),
-      enabled: (data) => {
-        const showToUser = game.users.current.isGM || !game.settings.get(CONSTANTS.MODULE_ID, "gmOnlyMode");
-        return data.editable && showToUser && game.settings.get(CONSTANTS.MODULE_ID, "enableTrainingNpc");
-      },
-      onRender: ({ app, element, data }) => {
-        activateTabListeners(data.actor, app, $(element), data);
-      },
-      tabContentsClasses: ["downtime-dnd5e"],
-      activateDefaultSheetListeners: false,
-    }),
-  );
-});
-
-// Open up for other people to use
-/** @deprecated remain for retrocompatibility */
-export function crashTNT() {
-  async function updateActivityProgress(actorName, itemName, newProgress) {
-    await API.updateActivityProgress(actorName, itemName, newProgress);
-  }
-
-  function getActivitiesForActor(actorName) {
-    return API.getActivitiesForActor(actorName);
-  }
-
-  function getActivity(actorName, itemName) {
-    return API.getActivity(actorName, itemName);
-  }
-
-  return {
-    updateActivityProgress: updateActivityProgress,
-    getActivity: getActivity,
-    getActivitiesForActor: getActivitiesForActor,
-  };
-}

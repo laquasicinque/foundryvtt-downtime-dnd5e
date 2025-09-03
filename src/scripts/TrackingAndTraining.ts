@@ -24,6 +24,7 @@ import {
 import { getActor } from "./utils/getActor.js";
 import { Iter, pluck } from "it-al";
 import { pluckId } from "./utils/pluckId.js";
+import { settings } from "./utils/settings.js";
 
 const { DialogV2 } = foundry.applications.api;
 
@@ -388,7 +389,7 @@ export const TrackingAndTraining = {
     const options = {} as Partial<
       dnd5e.dice.D20Roll.Configuration & { rollMode: string; vanilla: boolean }
     >;
-    if (game.settings.get(CONSTANTS.MODULE_ID, "gmOnlyMode")) {
+    if (settings.gmOnlyMode) {
       options.rollMode = "gmroll";
     } //GM Only Mode
     if (
@@ -489,10 +490,7 @@ export const TrackingAndTraining = {
       return;
     }
     if (activity.progress >= activity.completionAt) {
-      const alertFor = game.settings.get(
-        CONSTANTS.MODULE_ID,
-        "announceCompletionFor",
-      );
+      const alertFor = settings.announceCompletionFor;
       const isPc = actor.hasPlayerOwner;
       let sendIt;
 
@@ -531,7 +529,7 @@ export const TrackingAndTraining = {
           content: string;
           whisper?: foundry.documents.User.Stored[];
         } = { content: chatHtml };
-        if (game.settings.get(CONSTANTS.MODULE_ID, "gmOnlyMode")) {
+        if (settings.gmOnlyMode) {
           chatObj.whisper = ChatMessage.getWhisperRecipients("GM");
         }
         ChatMessage.create(chatObj);
@@ -669,7 +667,7 @@ export const TrackingAndTraining = {
     foundry.utils.saveDataToFile(
       jsonData,
       "application/json",
-      `${actor.id}-tracked-items-backup.json`,
+      `${actor.name.slice(0, 20)}-${actor.id}-tracked-items-backup.json`,
     );
   },
 
@@ -712,12 +710,8 @@ export const TrackingAndTraining = {
       const currentCategoryIds = new Set(pluckId(currentCategories));
       const currentCategoryNames = new Set(pluck(currentCategories, "name"));
       const categoriesToDelete = new Set<string>();
-      const importedItemsByCategory = importedItems.reduce((acc, item) => {
-        const arr: Downtime.TrackedItem[] = acc.get(item.category) ?? [];
-        arr.push(item);
-        acc.set(item.category, arr);
-        return acc;
-      }, new Map<string, Downtime.TrackedItem[]>());
+      const importedItemsByCategory =
+        Iter.from(importedItems).groupBy("category");
 
       for (const category of importedCategories) {
         // De-dupe category ID's

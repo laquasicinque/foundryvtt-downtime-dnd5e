@@ -7,7 +7,7 @@ import { svelte } from "@sveltejs/vite-plugin-svelte";
 // the dev server.
 const s_MODULE_ID = "downtime-dnd5e";
 const s_PACKAGE_ID = "modules/" + s_MODULE_ID;
-const s_ENTRY_JAVASCRIPT = "module.js";
+const s_ENTRY_JAVASCRIPT = "module.ts";
 
 const s_COMPRESS = false; // Set to true to compress the module bundle.
 const s_SOURCEMAPS = true; // Generate sourcemaps for the bundle (recommended).
@@ -70,7 +70,7 @@ export default () => {
             target: ["es2022", "chrome100"],
             terserOptions: s_COMPRESS ? { ...terserConfig(), ecma: 2022 } : void 0,
             lib: {
-                entry: path.resolve(__dirname, "./src/" + s_ENTRY_JAVASCRIPT), // "./module.js"
+                entry: path.resolve(__dirname, "./src/" + s_ENTRY_JAVASCRIPT), // "./module.svelte.ts"
                 formats: ["es"],
                 fileName: "module",
             },

@@ -77,8 +77,6 @@
     return Boolean(openStates.get(id));
   };
 
-  const editCategory = (categoryId: string) => onEditCategory?.(categoryId);
-  const deleteCategory = (categoryId: string) => onDeleteCategory?.(categoryId);
   const editActivity = (itemId: string) => onEditActivity?.(itemId);
   const deleteActivity = (itemId: string) => onDeleteActivity?.(itemId);
   const setProgress = (id: string, progress: number) => {
