@@ -25,6 +25,7 @@ import { getActor } from "./utils/getActor.js";
 import { Iter, pluck } from "it-al";
 import { pluckId } from "./utils/pluckId.js";
 import { settings } from "./utils/settings.js";
+import { clamp } from "./utils/clamp.js";
 
 const { DialogV2 } = foundry.applications.api;
 
@@ -413,8 +414,7 @@ export const TrackingAndTraining = {
 
   // Gets the result of the roll for tool checks
   getToolRollResult(roll: Downtime.Roll[]) {
-    const result = Iter.from(roll).pluck("total").filterNullish().sum();
-    return Number(result) || 0;
+    return Iter.from(roll).pluck("total").filterNullish().sum();
   },
 
   // Calculates the progress value of an item and logs the change to the progress
@@ -423,34 +423,23 @@ export const TrackingAndTraining = {
   calculateNewProgress(
     item: Downtime.TrackedItem,
     actionName: string,
-    change: number,
+    value: number,
     absolute = false,
   ) {
-    let newProgress = 0;
+    let newProgress = item.progress;
 
     if (absolute) {
-      newProgress = change;
-    } else {
-      if (item.dc) {
-        //if there's a dc set
-        if (change >= item.dc) {
-          //if the check beat the dc
-          newProgress = item.progress + 1; //increase the progress
-        } else {
-          //check didnt beat dc
-          newProgress = item.progress; //add nothing
-        }
-      } else {
-        //if no dc set
-        newProgress = item.progress + change;
+      newProgress = value;
+    } else if (item.dc) {
+      if (value >= item.dc) {
+        newProgress = item.progress + 1;
       }
+    } else {
+      //if no dc set
+      newProgress = item.progress + value;
     }
 
-    if (newProgress > item.completionAt) {
-      newProgress = item.completionAt;
-    } else if (newProgress < 0) {
-      newProgress = 0;
-    }
+    newProgress = clamp(newProgress, item.completionAt, 0);
 
     // Log item change
     // Make sure flags exist and add them if they don't
@@ -468,9 +457,10 @@ export const TrackingAndTraining = {
       user: game.user.name,
       note: "",
     } as Downtime.AuditLogV1;
-    item.changes.push(logEntry);
 
+    item.changes.push(logEntry);
     item.progress = newProgress;
+
     return item;
   },
 
@@ -486,37 +476,35 @@ export const TrackingAndTraining = {
     if (activity.progress >= activity.completionAt) {
       const alertFor = settings.announceCompletionFor;
       const isPc = actor.hasPlayerOwner;
-      let sendIt;
+      let shouldSendAlert = false;
 
       switch (alertFor) {
         case "none":
-          sendIt = false;
+          shouldSendAlert = false;
           break;
         case "both":
-          sendIt = true;
+          shouldSendAlert = true;
           break;
         case "npc":
-          sendIt = !isPc;
+          shouldSendAlert = !isPc;
           break;
         case "pc":
-          sendIt = isPc;
+          shouldSendAlert = isPc;
           break;
-        default:
-          sendIt = false;
       }
 
-      if (sendIt) {
+      if (shouldSendAlert) {
         Logger.debug(
           "" +
             actor.name +
             " " +
             localize("downtime-dnd5e.CompletedATrackedItem"),
         );
-        const chatHtml = await renderTemplate(
+        const chatHtml = await foundry.applications.handlebars.renderTemplate(
           `modules/${CONSTANTS.MODULE_ID}/templates/completion-message.hbs`,
           {
-            actor: actor,
-            activity: activity,
+            actor,
+            activity,
           },
         );
         const chatObj: {
@@ -571,7 +559,7 @@ export const TrackingAndTraining = {
         rollType = "ability";
       } else if (skills.includes(item.ability)) {
         rollType = "skill";
-      } else if (item.ability.substr(0, 5) === "tool-") {
+      } else if (item.ability.slice(0, 5) === "tool-") {
         rollType = "tool";
       }
     } else if (item.progressionStyle === "MACRO") {

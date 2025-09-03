@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { HTMLProgressAttributes } from "svelte/elements";
+  import { clamp } from "../utils/clamp";
 
   type DndProgressProps = {
     value: number | number[];
@@ -10,7 +11,13 @@
 
   const value = $derived(Array.isArray(rawValue) ? Number(rawValue[0]) : Number(rawValue));
   const max = $derived(Number(rawMax));
-  const progressPercent = $derived(((value / max) * 100).toNearest(1));
+  const progressPercent = $derived.by(() => {
+    const percent = (value / max) * 100
+    if (percent >= 100) return 100
+    const safePercent = percent.toNearest(1)
+    // Unless it's fully complete, we don't want to say 100%
+    return clamp(safePercent, 99,0)
+  })
 </script>
 
 <progress data-percent={progressPercent} {value} {max} {...otherProps}>{progressPercent}%</progress>
