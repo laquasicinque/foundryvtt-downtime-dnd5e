@@ -2,6 +2,7 @@ import cleanPlugin from "vite-plugin-clean";
 import { normalizePath } from "vite";
 import path from "path";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
+import { viteStaticCopy } from 'vite-plugin-static-copy';
 
 // For convenience, you just need to modify the package ID below as it is used to fill in default proxy settings for
 // the dev server.
@@ -86,6 +87,51 @@ export default () => {
             },
         },
 
-        plugins: [svelte({ configFile: "../svelte.config.js" }), cleanPlugin()],
+        plugins: [
+            viteStaticCopy({
+        targets: [
+        //   {
+        //     src: normalizePath(path.resolve(__dirname, './src/assets')) + '/[!.]*', // 1️
+        //     dest: normalizePath(path.resolve(__dirname, `./dist/${s_MODULE_ID}/assets`)), // 2️
+        //   },
+        //   {
+        //     src: normalizePath(path.resolve(__dirname, './src/images')) + '/[!.]*', // 1️
+        //     dest: normalizePath(path.resolve(__dirname, `./dist/${s_MODULE_ID}/images`)), // 2️
+        //   },
+        //   {
+        //     src: normalizePath(path.resolve(__dirname, './src/icons')) + '/[!.]*', // 1️
+        //     dest: normalizePath(path.resolve(__dirname, `./dist/${s_MODULE_ID}/icons`)), // 2️
+        //   },
+          {
+            src: normalizePath(path.resolve(__dirname, './src/templates')) + '/[!.]*', // 1️
+            dest: normalizePath(path.resolve(__dirname, `./dist/${s_MODULE_ID}/templates`)), // 2️
+          },
+        //   {
+        //     src: normalizePath(path.resolve(__dirname, './src/lang')) + '/[!.]*',
+        //     dest: normalizePath(path.resolve(__dirname, `./dist/${s_MODULE_ID}/lang`)),
+        //   },
+          {
+            src: normalizePath(path.resolve(__dirname, './src/languages/*.json')),
+            dest: normalizePath(path.resolve(__dirname, `./dist/${s_MODULE_ID}/languages`)),
+          },
+        //   {
+        //     src: normalizePath(path.resolve(__dirname, './src/styles')) + '/**/*.css',
+        //     dest: normalizePath(path.resolve(__dirname, `./dist/${s_MODULE_ID}/styles`)),
+        //   },
+        //   {
+        //     src: normalizePath(path.resolve(__dirname, './src/packs')) + '/[!.^(_?.*)]*', // + '/[!.^(_source)]*',
+        //     dest: normalizePath(path.resolve(__dirname, `./dist/${s_MODULE_ID}/packs`)),
+        //   },
+          {
+            src: normalizePath(path.resolve(__dirname, './src/module.json')),
+            dest: normalizePath(path.resolve(__dirname, `./dist/${s_MODULE_ID}/`)),
+          },
+		//       {
+        //     src: normalizePath(path.resolve(__dirname, './src/scripts/libs')) + '/[!.]*',
+        //     dest: normalizePath(path.resolve(__dirname, `./dist/${s_MODULE_ID}/scripts/libs`)),
+        //   },
+        ],
+      }),
+            svelte({ configFile: "../svelte.config.js" }), cleanPlugin()],
     };
 };
