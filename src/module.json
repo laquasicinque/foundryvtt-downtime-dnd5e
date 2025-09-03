@@ -59,9 +59,7 @@
     "esmodules": ["module.js"],
     "styles": [
         "styles/downtime-dnd5e-training-tab.css",
-        "styles/downtime-dnd5e-tracked-item-app.css",
-        "styles/downtime-dnd5e-audit-log.css",
-        "styles/downtime-dnd5e-category-app.css"
+        "styles/downtime-dnd5e-audit-log.css"
     ],
     "compatibility": {
         "minimum": 11,
