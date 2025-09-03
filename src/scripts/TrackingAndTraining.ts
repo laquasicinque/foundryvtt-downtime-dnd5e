@@ -316,6 +316,7 @@ export const TrackingAndTraining = {
         // Roll to increase progress
         const options = TrackingAndTraining.getRollOptions();
         const r = await tool.rollToolCheck(options);
+
         if (r) {
           const attemptName = localize("downtime-dnd5e.Roll") + " " + toolName;
           // Increase progress
@@ -399,28 +400,21 @@ export const TrackingAndTraining = {
         "0.9.25",
       )
     ) {
+      // Use vanilla rolls when midi is enabled
       options.vanilla = true;
-    } //Handles BR. Want it on in all cases except when midi is enabled
+    }
     return options;
   },
 
-  // Gets the result of the roll. Necessary for compatibility with BR, which returns CustomItemRoll objects.
+  // Gets the result of the roll
   getRollResult(roll: Downtime.Roll[]) {
     return Iter.from(roll).pluck("total").filterNullish().sum();
   },
 
-  // Gets the result of the roll. Necessary for compatibility with BR, which returns CustomItemRoll objects.
-  // This is slightly different for tools because of how the object gets attached to the roll.
-  getToolRollResult(roll: Downtime.Roll) {
-    let result;
-    if (roll.BetterRoll) {
-      result = roll.BetterRoll.entries.filter(
-        (entry) => entry.type == "multiroll",
-      )[0].entries[0].total;
-    } else {
-      result = roll.total;
-    }
-    return Number(result);
+  // Gets the result of the roll for tool checks
+  getToolRollResult(roll: Downtime.Roll[]) {
+    const result = Iter.from(roll).pluck("total").filterNullish().sum();
+    return Number(result) || 0;
   },
 
   // Calculates the progress value of an item and logs the change to the progress

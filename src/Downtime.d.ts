@@ -195,15 +195,7 @@ declare namespace Downtime {
     };
 
     // Extended roll type that supports additional module properties
-    type Roll = foundry.dice.Roll.Any & {
-        // BetterRolls support
-        BetterRoll?: {
-            entries: Array<{
-                type: string;
-                entries: Array<{ total: number }>;
-            }>;
-        };
-    };
+    type Roll = foundry.dice.Roll.Any;
 
     type ActorResolvable = dnd5e.documents.Actor5e<'character'> | string
 }
