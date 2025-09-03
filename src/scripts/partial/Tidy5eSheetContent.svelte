@@ -36,7 +36,6 @@
   );
 
   let isEditMode = $derived(sheet._context.data.unlocked);
-type AnyFunction = (...args:any[]) => any
 
   const showToUserEditMode = $derived.by(subs(() =>  (
       !settings.gmOnlyEditMode &&
@@ -331,7 +330,7 @@ type AnyFunction = (...args:any[]) => any
 
 <section class="downtime-dnd5e-controls">
   <h2>Character Downtimes</h2>
-  {#if !showToUserEditMode}
+  {#if showToUserEditMode}
     <div class="align-end">
       <button
         type="button"

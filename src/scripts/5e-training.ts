@@ -58,7 +58,6 @@ export const setupHooks = () => {
             target: mountRoot,
             props: {
               sheet,
-              isEditMode: sheet["_mode"] === sheet.constructor.MODES.EDIT,
               actor: sheet.actor,
             },
           }),

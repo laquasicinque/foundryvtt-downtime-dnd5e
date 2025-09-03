@@ -20,25 +20,28 @@
   import { settings } from "../utils/settings";
 
   type Props = {
-    isEditMode: boolean,
     sheet: Downtime.ActorSheetApplication,
     actor: dnd5e.documents.Actor5e<'character'>
   }
 
-  const { isEditMode, sheet: sheetRaw, actor }: Props = $props();
+  const { sheet: sheetRaw, actor }: Props = $props();
   const { pubs, subs } = getSheetFns(sheetRaw);
 
   const sheet = $derived.by(subs(() => sheetRaw));
 
+  const isEditMode = $derived.by(subs(() =>sheet["_mode"] === sheet.constructor.MODES.EDIT))
 
   const dropdownOptions = TrackingAndTraining.getDowntimeDropdownOptions(
     actor.id!
   );
   const showToUserEditMode = $derived.by(
     subs(
-      () =>
-        !settings.gmOnlyEditMode &&
-        !game.users?.current?.isGM
+      () => {
+        const isGM = game.users?.current?.isGM ?? false
+        const { gmOnlyEditMode } = settings
+        if (gmOnlyEditMode && !isGM) return false
+        return true
+      }
     )
   );
   const showImportButton = $derived.by(
@@ -320,10 +323,12 @@
   </button>
 </div>
 
-{#if !showToUserEditMode}
+{#if showToUserEditMode}
   <ActorActivityButtons {actor}>
     <h4>Character Downtimes</h4>
   </ActorActivityButtons>
+{:else}
+    <h4>Character Downtimes</h4>
 {/if}
 
 <section class="items-list downtime-list">
@@ -363,9 +368,13 @@
 
 <hr />
 
+{#if showToUserEditMode}
 <WorldActivityButtons {actor}>
   <h4>World Downtimes</h4>
 </WorldActivityButtons>
+{:else}
+<h4>World Downtimes</h4>
+{/if}
 
 <section class="items-list downtime-list">
   {#if uncategorizedWorldActivities.activities.length}
