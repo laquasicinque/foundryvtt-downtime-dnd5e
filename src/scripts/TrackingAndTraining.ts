@@ -95,6 +95,7 @@ export const TrackingAndTraining = {
     actorId: string,
     dropdownOptions: Downtime.DropdownOptions,
     world = false,
+    start: Partial<Downtime.TrackedItemV1> = {},
   ) {
     Logger.debug("New Item excuted!");
     const actor = getActor(actorId) as any;
@@ -102,6 +103,7 @@ export const TrackingAndTraining = {
     const activity = createTrackedItem({
       progressionStyle: "ABILITY",
       ability: "int",
+      ...(start as any), // due to the typing, we need to  set this to any for now
     });
 
     const data = {

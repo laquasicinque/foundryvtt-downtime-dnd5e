@@ -22,7 +22,7 @@
   );
 </script>
 
-<section class="tidy-table" class:cssClass data-tidy-sheet-part="item-table" data-tidy-section-key={key}>
+<section class={["tidy-table",cssClass]} data-tidy-sheet-part="item-table" data-tidy-section-key={key} {...attributes}>
   {@render header?.(false)}
   <div role="presentation">
     {@render body?.()}

@@ -19,6 +19,7 @@
     showToUserEditMode?: boolean;
     actor?: dnd5e.documents.Actor5e<"character">;
 
+    onAddActivity?: (categoryId: string) => void;
     onEditCategory?: (categoryId: string) => void;
     onDeleteCategory?: (categoryId: string) => void;
     onEditActivity?: (itemId: string) => void;
@@ -44,6 +45,7 @@
     categoryControls,
     showToUserEditMode,
     actor,
+    onAddActivity,
     onEditCategory,
     onDeleteCategory,
     onEditActivity,
@@ -74,7 +76,7 @@
   };
 
   const toggle = (activity: Downtime.TrackedItem) => {
-    const id = activity.id
+    const id = activity.id;
     // toggle unless there's no description
     openStates.set(id, !openStates.get(id) && !!activity.description.trim());
     return Boolean(openStates.get(id));
@@ -97,7 +99,7 @@
   }
 </script>
 
-<TidyTable key={category.id}>
+<TidyTable key={category.id} class="downtime-activities">
   {#snippet header()}
     <TidyTableHeaderRow>
       <TidyTableHeaderCell primary
@@ -107,22 +109,32 @@
       <TidyTableHeaderCell>Type</TidyTableHeaderCell>
       <TidyTableHeaderCell></TidyTableHeaderCell>
       <TidyTableHeaderCell>Progress</TidyTableHeaderCell>
-      <TidyTableHeaderCell class={{ "header-cell-actions": !isEditMode || !(onEditCategory && onDeleteCategory) }}>
+      <TidyTableHeaderCell
+        class={{
+          "header-cell-actions":
+            !isEditMode || !(onEditCategory && onDeleteCategory),
+        }}
+      >
         {#if showToUserEditMode}
-            {#if isEditMode && onEditCategory && onDeleteCategory}
-            <a class="tidy-table-button" title="Edit Category"
-                onclick={preventDefault((e) => onEditCategory?.(category.id))}
-                ><i class="fas fa-edit"></i></a
+          {#if isEditMode && onEditCategory && onDeleteCategory}
+            <a
+              class="tidy-table-button"
+              title="Edit Category"
+              onclick={preventDefault((e) => onEditCategory?.(category.id))}
+              ><i class="fas fa-edit"></i></a
             >
-            <a class="tidy-table-button" title="Delete Category"
-            onclick={preventDefault((e) => onDeleteCategory?.(category.id))}
-                ><i class="fas fa-trash"></i></a
+            <a
+              class="tidy-table-button"
+              title="Delete Category"
+              onclick={preventDefault((e) => onDeleteCategory?.(category.id))}
+              ><i class="fas fa-trash"></i></a
             >
-            {:else}
+          {:else}
             <a class="tidy-table-button" title="Add Activity"
-                ><i class="fas fa-plus"></i></a
+            onclick={preventDefault((e) => onAddActivity(category.id))}
+              ><i class="fas fa-plus"></i></a
             >
-            {/if}
+          {/if}
         {/if}
       </TidyTableHeaderCell>
     </TidyTableHeaderRow>
@@ -159,12 +171,12 @@
               </span>
             </span>
             {#if activity.description}
-            <span class="row-detail-expand-indicator"
-              ><i
-                class="fa-solid fa-angle-right expand-indicator"
-                class:expanded={isOpen(activity)}
-              ></i>
-            </span>
+              <span class="row-detail-expand-indicator"
+                ><i
+                  class="fa-solid fa-angle-right expand-indicator"
+                  class:expanded={isOpen(activity)}
+                ></i>
+              </span>
             {/if}
           </span>
         </TidyTableCell>
@@ -179,7 +191,7 @@
                 activity.id,
                 (e.target as HTMLInputElement).valueAsNumber
               )}
-          /><span class="denom"></span></TidyTableCell
+          />/ <span class="denom">{ activity. completionAt }</span></TidyTableCell
         >
         <TidyTableCell columnWidth={isEditMode ? null : `10rem`}
           ><DndProgress
@@ -266,11 +278,92 @@
     padding: 0 !important;
   }
 
-  .tidy-table-row-use-button span {
+  .tidy-table-row-use-button .roll-prompt {
     position: absolute;
   }
 
   h3 {
     margin-left: 4px;
   }
+
+ :global(.downtime-activities input[type="number"]) {
+    width: 3rem;
+    padding: 0 4px;
+    border: none;
+    text-align: right;
+  }
+
+  .denom {
+    margin: 0 4px;
+  }
+
+  /* Classic sheet stuff */
+  :global(.tidy5e-sheet.application:where(.classic))
+    .tidy-table-row-use-button {
+    --t5e-icon-size-7x: 28px;
+  }
+
+  :global(.tidy5e-sheet.application:where(.classic) .roll-prompt) {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  :global(.tidy5e-sheet.application:where(.classic) .tidy-table-row),
+  :global(.tidy5e-sheet.application:where(.classic) .tidy-table-header-row) {
+    --t5e-size-20x: 5rem;
+    display: flex;
+    width: 100%;
+  }
+
+  :global(.tidy5e-sheet.application:where(.classic) .tidy-table-cell),
+  :global(.tidy5e-sheet.application:where(.classic) .tidy-table-header-cell) {
+    flex-basis: var(--tidy-table-column-width, var(--t5e-size-20x));
+    max-width: var(--tidy-table-column-width, var(--t5e-size-20x));
+  }
+  :global(.tidy5e-sheet.application:where(.classic) .tidy-table-cell.primary),
+  :global(
+    .tidy5e-sheet.application:where(.classic) .tidy-table-header-cell.primary
+  ) {
+    flex-grow: 1;
+    max-width: none;
+  }
+
+  :global(
+    .tidy5e-sheet.application:where(.classic)
+      .tidy-table-cell.primary
+      .item-name
+  ) {
+    padding-left: 8px;
+  }
+  :global(.tidy5e-sheet.application:where(.classic) h2) {
+    margin: 8px 4px;
+  }
+
+  :global(.tidy5e-sheet.application:where(.classic) h3) {
+    font-size: 0.75rem;
+    margin: 4px;
+  }
+
+  :global(.tidy5e-sheet.application:where(.classic) .tidy-table-container) {
+    gap: 8px;
+    display: flex;
+    flex-flow: column;
+  }
+
+:global(.tidy5e-sheet.application:where(.classic) .tidy-table-container button) {
+    border: none;
+    margin: 0 4px;
+  }
+:global(.tidy5e-sheet.application:where(.classic) .tidy-table-button) {
+    border: none;
+    margin: 0 4px;
+  }
+  :global(.tidy5e-sheet.application:where(.classic) .tidy-table-container input) {
+      width: 2.5rem;
+      padding: 0 4px;
+    }
+    :global(.tidy5e-sheet.application:where(.classic) .tidy-tab.downtime .button) {
+        padding: 4px 8px;
+    }
 </style>

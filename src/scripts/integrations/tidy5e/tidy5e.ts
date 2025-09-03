@@ -15,7 +15,7 @@ export function registerTidy5eSheet(
   if (!api) return;
 
   const tab = new api.models.HtmlTab({
-    html: "<div data-svelte></div>",
+    html: '<div class="scroll-container" data-svelte></div>',
     title: "Downtime",
     iconClass: "fa-solid fa-clock",
     tabId: "downtime",

@@ -287,6 +287,9 @@
     async () => await TrackingAndTraining.addItem(actor.id!, dropdownOptions)
   );
 
+  const addItemInCategory = pubs(async (category: string) => await TrackingAndTraining.addItem(actor.id!, dropdownOptions, false, { category }))
+  const addItemInWorldCategory = pubs(async (category: string) => await TrackingAndTraining.addItem(actor.id!, dropdownOptions, true, { category }))
+
   function exportTrackedItems() {
     return TrackingAndTraining.exportItems(actor.id!);
   }
@@ -366,6 +369,7 @@
       {showToUserEditMode}
       isEditMode={isEditMode}
       category={uncategorizedActorActivities}
+      onAddActivity={() => addItemInCategory('')}
       onEditActivity={(itemId) => editActivity(itemId)}
       onDeleteActivity={(itemId) => deleteActivity(itemId)}
       onRollActivity={(itemId) => rollActivity(itemId)}
@@ -381,6 +385,7 @@
       {showToUserEditMode}
       isEditMode={isEditMode}
       {category}
+      onAddActivity={(categoryId) => addItemInCategory(categoryId)}
       onEditCategory={(catId) => editCategory(catId)}
       onDeleteCategory={(catId) => deleteCategory(catId)}
       onEditActivity={(itemId) => editActivity(itemId)}
@@ -406,6 +411,7 @@
       {isEditMode}
       {showToUserEditMode}
       category={uncategorizedWorldActivities}
+      onAddActivity={() => addItemInWorldCategory('')}
       onEditActivity={(itemId) => editWorldActivity(itemId)}
       onDeleteActivity={(itemId) => deleteWorldActivity(itemId)}
       onRollActivity={(itemId) => rollWorldActivity(itemId)}
@@ -420,6 +426,7 @@
       {isEditMode}
       {showToUserEditMode}
       {category}
+      onAddActivity={(categoryId) => addItemInWorldCategory(categoryId)}
       onEditCategory={(catId) => editWorldCategory(catId)}
       onDeleteCategory={(catId) => deleteWorldCategory(catId)}
       onEditActivity={(itemId) => editWorldActivity(itemId)}
@@ -442,7 +449,7 @@
     }
   .downtime-dnd5e-controls {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     margin-top: 8px;
   }
 
