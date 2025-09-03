@@ -1,16 +1,16 @@
 <script lang="ts">
-  import { type Column } from "../components/DndTable.svelte";
-  import { TrackingAndTraining } from "../TrackingAndTraining";
-  import DndProgress from "../components/DndProgress.svelte";
-  import { localize } from "../utils/localize";
-  import TidyTable from "../integrations/tidy5e/components/TidyTable.svelte";
-  import TidyTableCell from "../integrations/tidy5e/components/TidyTableCell.svelte";
-  import TidyTableHeaderCell from "../integrations/tidy5e/components/TidyTableHeaderCell.svelte";
-  import TidyTableHeaderRow from "../integrations/tidy5e/components/TidyTableHeaderRow.svelte";
-  import TidyTableRow from "../integrations/tidy5e/components/TidyTableRow.svelte";
-  import ExpandableContainer from "../integrations/tidy5e/components/ExpandableContainer.svelte";
+  import { type Column } from "../../../components/DndTable.svelte";
+  import { TrackingAndTraining } from "../../../TrackingAndTraining";
+  import DndProgress from "../../../components/DndProgress.svelte";
+  import { localize } from "../../../utils/localize";
+  import TidyTable from "../components/TidyTable.svelte";
+  import TidyTableCell from "../components/TidyTableCell.svelte";
+  import TidyTableHeaderCell from "../components/TidyTableHeaderCell.svelte";
+  import TidyTableHeaderRow from "../components/TidyTableHeaderRow.svelte";
+  import TidyTableRow from "../components/TidyTableRow.svelte";
+  import ExpandableContainer from "../components/ExpandableContainer.svelte";
   import { SvelteMap } from "svelte/reactivity";
-  import { preventDefault } from "../utils/preventDefault";
+  import { preventDefault } from "../../../utils/preventDefault";
 
   type ActivitiesTableProps = {
     category: Downtime.CategoryWithActivities;
@@ -312,21 +312,21 @@
   :global(.tidy5e-sheet.application:where(.classic) .tidy-table-row),
   :global(.tidy5e-sheet.application:where(.classic) .tidy-table-header-row) {
     --t5e-size-20x: 5rem;
-    display: flex;
-    width: 100%;
+    display: flex !important;
+    width: 100% !important;
   }
 
   :global(.tidy5e-sheet.application:where(.classic) .tidy-table-cell),
   :global(.tidy5e-sheet.application:where(.classic) .tidy-table-header-cell) {
-    flex-basis: var(--tidy-table-column-width, var(--t5e-size-20x));
-    max-width: var(--tidy-table-column-width, var(--t5e-size-20x));
+    flex-basis: var(--tidy-table-column-width, var(--t5e-size-20x)) !important;
+    max-width: var(--tidy-table-column-width, var(--t5e-size-20x)) !important;
   }
   :global(.tidy5e-sheet.application:where(.classic) .tidy-table-cell.primary),
   :global(
     .tidy5e-sheet.application:where(.classic) .tidy-table-header-cell.primary
   ) {
-    flex-grow: 1;
-    max-width: none;
+    flex-grow: 1 !important;
+    max-width: none !important;
   }
 
   :global(
@@ -334,36 +334,36 @@
       .tidy-table-cell.primary
       .item-name
   ) {
-    padding-left: 8px;
+    padding-left: 8px !important;
   }
   :global(.tidy5e-sheet.application:where(.classic) h2) {
-    margin: 8px 4px;
+    margin: 8px 4px !important;
   }
 
   :global(.tidy5e-sheet.application:where(.classic) h3) {
-    font-size: 0.75rem;
-    margin: 4px;
+    font-size: 0.75rem !important;
+    margin: 4px !important;
   }
 
   :global(.tidy5e-sheet.application:where(.classic) .tidy-table-container) {
-    gap: 8px;
-    display: flex;
-    flex-flow: column;
+    gap: 8px !important;
+    display: flex !important;
+    flex-flow: column !important;
   }
 
 :global(.tidy5e-sheet.application:where(.classic) .tidy-table-container button) {
-    border: none;
-    margin: 0 4px;
+    border: none !important;
+    margin: 0 4px !important;
   }
 :global(.tidy5e-sheet.application:where(.classic) .tidy-table-button) {
-    border: none;
-    margin: 0 4px;
+    border: none !important;
+    margin: 0 4px !important;
   }
   :global(.tidy5e-sheet.application:where(.classic) .tidy-table-container input) {
-      width: 2.5rem;
-      padding: 0 4px;
+      width: 2.5rem !important;
+      padding: 0 4px !important;
     }
     :global(.tidy5e-sheet.application:where(.classic) .tidy-tab.downtime .button) {
-        padding: 4px 8px;
+        padding: 4px 8px !important;
     }
 </style>

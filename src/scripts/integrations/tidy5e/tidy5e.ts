@@ -1,16 +1,15 @@
 import {
   ensureSheetStoredValues,
   getSvelteInstance,
-  getSvelteElement,
   setSvelteElement,
   triggerUpdates,
   setSvelteInstance,
 } from "../../lib/reactiveSheet.svelte";
-import SheetContent from "../../partial/Tidy5eSheetContent.svelte";
+import SheetContent from "./partial/Tidy5eSheetContent.svelte";
 import { mount } from "svelte";
 
 export function registerTidy5eSheet(
-  api?: import("../../../../node_modules/tidy5e-sheet/src/api/Tidy5eSheetsApi.ts").Tidy5eSheetsApi,
+  api?: import("tidy5e-sheet/src/api/Tidy5eSheetsApi.ts").Tidy5eSheetsApi,
 ) {
   if (!api) return;
 
