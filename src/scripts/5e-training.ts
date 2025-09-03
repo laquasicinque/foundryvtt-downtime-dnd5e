@@ -19,7 +19,7 @@ import {
   getSvelteInstance,
 } from "./lib/reactiveSheet.svelte.js";
 import SheetContent from "./partial/SheetContent.svelte";
-import { settings, settings } from "./utils/settings.js";
+import { settings } from "./utils/settings.js";
 
 // Register Game Settings
 export const initHooks = () => {
@@ -85,11 +85,20 @@ export const setupHooks = () => {
       registerTidy5eSheet(api);
     },
   );
+
+  Hooks.on(
+    "renderTidy5eCharacterSheetQuadrone",
+    (sheet, form: HTMLFormElement, context, options) => {
+      if (!options.isFirstRender) {
+        triggerUpdates(sheet);
+        return;
+      }
+      ensureSheetStoredValues(sheet);
+    },
+  );
 };
 
 export const readyHooks = () => {
-  API.crashTNT = crashTNT();
-
   const mod = game?.modules?.get(CONSTANTS.MODULE_ID);
   if (mod) mod.api = API;
   migrateAllActors();
@@ -314,11 +323,11 @@ async function migrateAllActors() {
               timestamp: new Date(),
             };
             Logger.info(
-              localize("downtime-dnd5e.BackingUpDataFor") + ": " + a.data.name,
+              localize("downtime-dnd5e.BackingUpDataFor") + ": " + a.name,
               true,
             );
             Logger.debug(
-              localize("downtime-dnd5e.BackingUpDataFor") + ": " + a.data.name,
+              localize("downtime-dnd5e.BackingUpDataFor") + ": " + a.name,
             );
             await a.setFlag(
               CONSTANTS.MODULE_ID,
@@ -328,11 +337,11 @@ async function migrateAllActors() {
 
             // Alert that we're migrating actor
             Logger.info(
-              localize("downtime-dnd5e.UpdatingDataFor") + ": " + a.data.name,
+              localize("downtime-dnd5e.UpdatingDataFor") + ": " + a.name,
               true,
             );
             Logger.debug(
-              localize("downtime-dnd5e.UpdatingDataFor") + ": " + a.data.name,
+              localize("downtime-dnd5e.UpdatingDataFor") + ": " + a.name,
             );
 
             // Loop through items and update if they need updates

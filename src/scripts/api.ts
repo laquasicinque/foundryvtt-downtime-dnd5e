@@ -10,10 +10,8 @@ import {
 } from "./utils/activities.js";
 import { getActorCategories, getWorldCategories } from "./utils/categories.js";
 import { localize } from "./utils/localize.js";
-import { crashTNT } from "./5e-training.js";
 
 const API = {
-  crashTNT: undefined as ReturnType<typeof crashTNT> | undefined,
   /**
    * @deprecated
    * @param {Actor|string} actor
@@ -40,7 +38,11 @@ const API = {
     activityName: string,
     newProgress: number,
   ) {
-    const actorTmp = await RetrieveHelpers.getActorAsync(actor, false, false);
+    const actorTmp = (await RetrieveHelpers.getActorAsync(
+      actor,
+      false,
+      false,
+    )) as dnd5e.documents.Actor5e<"character">;
     if (!actorTmp) {
       Logger.warn(localize("downtime-dnd5e.ActorNotFoundWarning"), true);
       return;

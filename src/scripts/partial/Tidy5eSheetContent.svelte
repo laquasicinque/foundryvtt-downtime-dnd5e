@@ -19,60 +19,36 @@
   import { clamp } from "../utils/clamp";
   import { preventDefault } from "../utils/preventDefault";
   import { derived } from "svelte/store";
-  import { settings } from "../utils/settings;
-
+  import { settings } from "../utils/settings";
+  import { getSheetFns } from "../lib/reactiveSheet.svelte";
   const {
     actor,
+    sheet: sheetRaw,
   }: { sheet: any; actor: dnd5e.documents.Actor5e<"character">; context: any } =
     $props();
 
+    console.log({sheetRaw})
+  const { pubs, subs } = getSheetFns(sheetRaw);
 
-  const context = getContext("context");
-  const sheet = derived(context, ($context) => $context.data.sheet)
-  getAllContexts().forEach((value,key) => {
-    value.subscribe((val) => console.log({[key]: val}))
-  })
-  $inspect({sheet, $sheet,})
+  const sheet = $derived.by(subs(()=>sheetRaw))
 
   const dropdownOptions = TrackingAndTraining.getDowntimeDropdownOptions(
     actor.id!
   );
-  let isEditMode = derived<any, boolean>(
-    context,
-    ($context: any) => $context.data.unlocked
-  );
+
+  let isEditMode = $derived(sheet._context.data.unlocked);
 type AnyFunction = (...args:any[]) => any
 
-  const version = $state(0)
-
-
-  const updatesVersion = <T extends AnyFunction>(fn: T) => {
-    return async (...args: Parameters<T>) => {
-      const result = await fn(...args);
-      return result;
-    };
-  };
-
-  const showToUserEditMode = $derived.by(() => {
-    version;
-    return (
+  const showToUserEditMode = $derived.by(subs(() =>  (
       !settings.gmOnlyEditMode &&
       !game.users?.current?.isGM
-    );
-  });
-  const showImportButton = $derived.by(() => {
-    version;
-    return settings.showImportButton
-  });
+    )
+  ));
+  const showImportButton = $derived.by(subs(() =>settings.showImportButton));
 
-  const categoriesActor = $derived.by(() => {
-    version;
-    return getActorCategories(actor);
-  });
-  const categoriesWorld = $derived.by(() => {
-    version;
-    return getWorldCategories();
-  });
+  const categoriesActor = $derived.by(subs(() =>getActorCategories(actor)));
+  const categoriesWorld = $derived.by(subs(() =>getWorldCategories()));
+
   const categoriesActorIds = $derived(new Set(pluckId(categoriesActor)));
   const categoriesWorldIds = $derived(new Set(pluckId(categoriesActor)));
 
@@ -113,18 +89,14 @@ type AnyFunction = (...args:any[]) => any
     isComplete: act.progress >= act.completionAt,
   }));
 
-  const activitiesActor = $derived.by(() => {
-    version;
-    return getActorActivities(actor);
-  });
+  const activitiesActor = $derived.by(subs(() => getActorActivities(actor)))
+
   const formattedActorActivities = $derived([
     ...mapFormatActivities(activitiesActor),
   ]);
 
-  const activitiesWorld = $derived.by(() => {
-    version;
-    return getWorldActivities();
-  });
+  const activitiesWorld = $derived.by(subs(() => getWorldActivities()));
+
   const formattedWorldActivities = $derived([
     ...mapFormatActivities(activitiesWorld),
   ]);
@@ -185,32 +157,32 @@ type AnyFunction = (...args:any[]) => any
     activities: activitiesWorldUncategorized,
   } as Downtime.CategoryWithActivities);
 
-  const editCategory = updatesVersion(
+  const editCategory = pubs(
     async (category: string) =>
-      await TrackingAndTraining.editCategory($sheet.actor.id!, category)
+      await TrackingAndTraining.editCategory(sheet.actor.id!, category)
   );
-  const deleteCategory = updatesVersion(
+  const deleteCategory = pubs(
     async (category: string) =>
-      await TrackingAndTraining.deleteCategory($sheet.actor.id!, category)
+      await TrackingAndTraining.deleteCategory(sheet.actor.id!, category)
   );
-  const editActivity = updatesVersion(
+  const editActivity = pubs(
     async (itemId: string) =>
       await TrackingAndTraining.editFromSheet(
-        $sheet.actor.id!,
+        sheet.actor.id!,
         itemId,
         dropdownOptions
       )
   );
-  const deleteActivity = updatesVersion(
+  const deleteActivity = pubs(
     async (itemId: string) =>
-      await TrackingAndTraining.deleteFromSheet($sheet.actor.id!, itemId)
+      await TrackingAndTraining.deleteFromSheet(sheet.actor.id!, itemId)
   );
-  const rollActivity = updatesVersion(
+  const rollActivity = pubs(
     async (itemId: string) =>
-      await TrackingAndTraining.progressItem($sheet.actor.id!, itemId)
+      await TrackingAndTraining.progressItem(sheet.actor.id!, itemId)
   );
 
-  const setProgress = updatesVersion(
+  const setProgress = pubs(
     async ({ id, progress }: { id: string; progress: number }) => {
       const items = getActorActivitiesMap(actor);
       const item = items.get(id);
@@ -225,31 +197,31 @@ type AnyFunction = (...args:any[]) => any
     }
   );
 
-  const editWorldCategory = updatesVersion(
+  const editWorldCategory = pubs(
     async (category: string) =>
-      await TrackingAndTraining.editCategory($sheet.actor.id!, category, true)
+      await TrackingAndTraining.editCategory(sheet.actor.id!, category, true)
   );
-  const deleteWorldCategory = updatesVersion(
+  const deleteWorldCategory = pubs(
     async (category: string) =>
-      await TrackingAndTraining.deleteCategory($sheet.actor.id!, category, true)
+      await TrackingAndTraining.deleteCategory(sheet.actor.id!, category, true)
   );
-  const editWorldActivity = updatesVersion(
+  const editWorldActivity = pubs(
     async (itemId: string) =>
       await TrackingAndTraining.editFromSheet(
-        $sheet.actor.id!,
+        sheet.actor.id!,
         itemId,
         dropdownOptions,
         true
       )
   );
-  const deleteWorldActivity = updatesVersion(
+  const deleteWorldActivity = pubs(
     async (itemId: string) =>
-      await TrackingAndTraining.deleteFromSheet($sheet.actor.id!, itemId, true)
+      await TrackingAndTraining.deleteFromSheet(sheet.actor.id!, itemId, true)
   );
-  const rollWorldActivity = updatesVersion(async (itemId: string) =>
-    TrackingAndTraining.progressItem($sheet.actor.id!, itemId, true)
+  const rollWorldActivity = pubs(async (itemId: string) =>
+    TrackingAndTraining.progressItem(sheet.actor.id!, itemId, true)
   );
-  const setWorldProgress = updatesVersion(
+  const setWorldProgress = pubs(
     async ({ id, progress }: { id: string; progress: number }) => {
       const items = getWorldActivitiesMap();
       const item = items.get(id);
@@ -278,7 +250,7 @@ type AnyFunction = (...args:any[]) => any
     event.dataTransfer?.setData("text/plain", JSON.stringify(dragData));
   };
 
-  const onDrop = updatesVersion(
+  const onDrop = pubs(
     async ({
       event,
       actor,
@@ -304,11 +276,11 @@ type AnyFunction = (...args:any[]) => any
     }
   );
 
-  const addCategory = updatesVersion(
+  const addCategory = pubs(
     async () => await TrackingAndTraining.addCategory(actor.id!)
   );
 
-  const addItem = updatesVersion(
+  const addItem = pubs(
     async () => await TrackingAndTraining.addItem(actor.id!, dropdownOptions)
   );
 
@@ -388,7 +360,7 @@ type AnyFunction = (...args:any[]) => any
   {#if uncategorizedActorActivities.activities.length}
     <TidyActivitiesTable
       {actor}
-      isEditMode={$isEditMode}
+      isEditMode={isEditMode}
       category={uncategorizedActorActivities}
       onEditCategory={(catId) => editCategory(catId)}
       onDeleteCategory={(catId) => deleteCategory(catId)}
@@ -404,7 +376,7 @@ type AnyFunction = (...args:any[]) => any
   {#each categorizedActorActivities as category (category.id)}
     <TidyActivitiesTable
       {actor}
-      isEditMode={$isEditMode}
+      isEditMode={isEditMode}
       {category}
       onEditCategory={(catId) => editCategory(catId)}
       onDeleteCategory={(catId) => deleteCategory(catId)}
@@ -428,7 +400,7 @@ type AnyFunction = (...args:any[]) => any
 <div class="items-list downtime-list">
   {#if uncategorizedWorldActivities.activities.length}
     <TidyActivitiesTable
-      isEditMode={$isEditMode}
+      isEditMode={isEditMode}
       category={uncategorizedWorldActivities}
       onEditCategory={(catId) => editWorldCategory(catId)}
       onDeleteCategory={(catId) => deleteWorldCategory(catId)}
@@ -443,7 +415,7 @@ type AnyFunction = (...args:any[]) => any
 
   {#each categorizedWorldActivities as category (category.id)}
     <TidyActivitiesTable
-      isEditMode={$isEditMode}
+      isEditMode={isEditMode}
       {category}
       onEditCategory={(catId) => editWorldCategory(catId)}
       onDeleteCategory={(catId) => deleteWorldCategory(catId)}

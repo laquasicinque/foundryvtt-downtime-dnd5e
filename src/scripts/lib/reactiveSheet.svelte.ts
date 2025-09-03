@@ -5,7 +5,13 @@ type SheetStoredValues = {
   element?: HTMLElement; // The element the instance is mounted to
   version: number;
   api: {
+    /**
+     * Subscribes to version changes
+     */
     subs: <Fn extends AnyFunction>(fn: Fn) => Fn;
+    /**
+     * triggers/publishes version changes
+     */
     pubs: <Fn extends AnyFunction>(fn: Fn) => Fn;
   };
 };

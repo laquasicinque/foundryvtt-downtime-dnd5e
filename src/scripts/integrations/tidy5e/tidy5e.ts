@@ -1,4 +1,4 @@
-import { mount, unmount } from "svelte";
+import { ensureSheetStoredValues } from "../../lib/reactiveSheet.svelte";
 import SheetContent from "../../partial/Tidy5eSheetContent.svelte";
 
 export function registerTidy5eSheet(
@@ -7,20 +7,20 @@ export function registerTidy5eSheet(
   if (!api) return;
 
   const tab = new api.models.SvelteTab({
-    component: {
-      component: SheetContent,
-      mount,
-      unmount,
-    },
+    component: SheetContent,
     title: "Downtime",
     iconClass: "fa-solid fa-clock",
     tabId: "downtime",
     getProps(data) {
+      ensureSheetStoredValues(data.sheet);
       return {
         actor: data.actor,
         sheet: data.sheet,
         context: data.sheet._context,
       };
+    },
+    onRender() {
+      console.log("hello");
     },
     enabled: () => true,
   });
