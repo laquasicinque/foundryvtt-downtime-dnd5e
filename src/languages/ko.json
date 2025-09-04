@@ -163,7 +163,10 @@
     "downtime-dnd5e.SaveTrackedItem": "추적된 항목 저장",
 
     "downtime-dnd5e.AddCategory": "카테고리 추가",
+    "downtime-dnd5e.AddWorldCategory": "월드 카테고리 추가",
+    "downtime-dnd5e.AddItemCategory": "아이템 카테고리 추가",
     "downtime-dnd5e.AddItem": "항목 추가",
+    "downtime-dnd5e.AddWorldItem": "월드 다운타임 추가",
     "downtime-dnd5e.CreateNewCategory": "새 카테고리 생성",
     "downtime-dnd5e.CreateNewItem": "새 항목 생성",
     "downtime-dnd5e.ReviewChanges": "변경사항 검토",

@@ -130,5 +130,11 @@
 
     "downtime-dnd5e.CheckTypeColumnHeader": "Tipo",
     "downtime-dnd5e.ProgressColumnHeader": "Progreso",
-    "downtime-dnd5e.LogActionMacro": "Macro / código externo"
+    "downtime-dnd5e.LogActionMacro": "Macro / código externo",
+
+    "downtime-dnd5e.AddCategory": "Añadir Categoría",
+    "downtime-dnd5e.AddWorldCategory": "Añadir Categoría Mundial",
+    "downtime-dnd5e.AddItemCategory": "Añadir Categoría de Objeto",
+    "downtime-dnd5e.AddItem": "Añadir Objeto",
+    "downtime-dnd5e.AddWorldItem": "Añadir Actividad entre Aventuras Mundial"
 }

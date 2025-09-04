@@ -2,7 +2,7 @@
     "id": "downtime-dnd5e",
     "title": "Downtime (Dnd5e)",
     "description": "Adds a tab to the character sheet to keep track of downtime activities, training, spell scribing, faction reputation, quest progress, and anything else you can think of.",
-    "version": "12.0.0",
+    "version": "13.0.0",
     "authors": [
         {
             "name": "p4535992",
@@ -58,15 +58,12 @@
     ],
     "esmodules": ["module.js"],
     "styles": [
-        "styles/downtime-dnd5e-training-tab.css",
-        "styles/downtime-dnd5e-tracked-item-app.css",
-        "styles/downtime-dnd5e-audit-log.css",
-        "styles/downtime-dnd5e-category-app.css"
+        "module.css"
     ],
     "compatibility": {
         "minimum": 11,
         "verified": 12,
-        "maximum": 12
+        "maximum": 13
     },
     "url": "https://github.com/p4535992/foundryvtt-downtime-dnd5e",
     "manifest": "https://github.com/p4535992/foundryvtt-downtime-dnd5e/releases/download/12.0.0/module.json",

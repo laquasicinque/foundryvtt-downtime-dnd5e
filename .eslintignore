@@ -15,4 +15,3 @@ src/lang/
 src/scripts/
 src/styles/
 src/templates/
-src/**/*.svelte
