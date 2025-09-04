@@ -1,5 +1,7 @@
 import CONSTANTS from "../constants.js";
+import { getActor } from "../utils/getActor.js";
 import Logger from "./Logger.js";
+import { MacroBuilder } from "./MacroBuilder.js";
 import { RetrieveHelpers } from "./retrieve-helpers.js";
 
 /* ========================================== */
@@ -8,10 +10,40 @@ export async function runMacro(macroReference, ...macroData) {
   return runMacro(null, macroReference, macroData);
 }
 
-export async function runMacroOnExplicitActor(explicitActor, macroReference, ...macroData) {
-  let macroFounded = await RetrieveHelpers.getMacroAsync(macroReference, false, true);
+export async function runMacroOnActor(
+  macroOrUuid: string | Macro,
+  actorResolvable: Downtime.ActorResolvable,
+  args: Record<string, unknown> = {},
+) {
+  const actor = getActor(actorResolvable);
+  const macro =
+    typeof macroOrUuid === "string" ? fromUuidSync(macroOrUuid) : macroOrUuid;
+
+  if (!(macro instanceof Macro)) {
+    throw new Error("First argument was not a Macro or Uuid of a Macro");
+  }
+
+  return new MacroBuilder(macro).with({ actor, ...args }).execute();
+}
+
+/**
+ * @deprecated use runMacroOnActor instead
+ */
+export async function runMacroOnExplicitActor(
+  explicitActor,
+  macroReference,
+  ...macroData
+) {
+  let macroFounded = await RetrieveHelpers.getMacroAsync(
+    macroReference,
+    false,
+    true,
+  );
   if (!macroFounded) {
-    throw error(`Could not find macro with reference "${macroReference}"`, true);
+    throw error(
+      `Could not find macro with reference "${macroReference}"`,
+      true,
+    );
   }
   // Credit to Otigon, Zhell, Gazkhan and MrVauxs for the code in this section
   /*
@@ -61,7 +93,15 @@ export async function runMacroOnExplicitActor(explicitActor, macroReference, ...
       const character = game.user.character;
       const event = getEvent();
 
-      Logger.debug("runMacro | ", { macro, speaker, actor, token, character, event, args });
+      Logger.debug("runMacro | ", {
+        macro,
+        speaker,
+        actor,
+        token,
+        character,
+        event,
+        args,
+      });
 
       //build script execution
       let body = ``;
@@ -72,7 +112,15 @@ export async function runMacroOnExplicitActor(explicitActor, macroReference, ...
             ${macro.command}
           })();`;
       }
-      const fn = Function("speaker", "actor", "token", "character", "event", "args", body);
+      const fn = Function(
+        "speaker",
+        "actor",
+        "token",
+        "character",
+        "event",
+        "args",
+        body,
+      );
 
       Logger.debug("runMacro | ", { body, fn });
 
@@ -94,10 +142,18 @@ export async function runMacroOnExplicitActor(explicitActor, macroReference, ...
         return undefined;
       }
     } else {
-      warn(`Something is wrong a macro can be only a 'char' or a 'script'`, true);
+      warn(
+        `Something is wrong a macro can be only a 'char' or a 'script'`,
+        true,
+      );
     }
   } catch (err) {
-    throw error(`Error when executing macro ${macroReference}!`, true, macroDataArr, err);
+    throw error(
+      `Error when executing macro ${macroReference}!`,
+      true,
+      macroDataArr,
+      err,
+    );
   }
 
   return result;
@@ -107,7 +163,10 @@ export function getOwnedCharacters(user?: User.Stored) {
   user = user || game.user;
   return game.actors
     .filter((actor) => {
-      return actor.ownership?.[user.id] === CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER && actor.prototypeToken.actorLink;
+      return (
+        actor.ownership?.[user.id] === CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER &&
+        actor.prototypeToken.actorLink
+      );
     })
     .sort((a, b) => {
       return b._stats.modifiedTime - a._stats.modifiedTime;
@@ -116,12 +175,18 @@ export function getOwnedCharacters(user?: User.Stored) {
 
 export function getUserCharacter(user?: User.Stored) {
   user = user ?? game.user;
-  return user.character || (user.isGM ? false : (getOwnedCharacters(user)?.[0] ?? false));
+  return (
+    user.character ||
+    (user.isGM ? false : (getOwnedCharacters(user)?.[0] ?? false))
+  );
 }
 
 export function isValidImage(pathToImage) {
   const pathToImageS = String(pathToImage);
-  if (pathToImageS.match(CONSTANTS.imageReg) || pathToImageS.match(CONSTANTS.imageRegBase64)) {
+  if (
+    pathToImageS.match(CONSTANTS.imageReg) ||
+    pathToImageS.match(CONSTANTS.imageRegBase64)
+  ) {
     return true;
   }
   return false;

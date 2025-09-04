@@ -39,7 +39,7 @@
     progressionStyle: "ABILITY",
     dc: undefined,
     completionAt: 300,
-    macroName: "",
+    macro: "",
     ability: "str",
     skill: "ath",
     tool: "",
@@ -59,16 +59,16 @@
   let validMacro = $state(false);
 
   const checkMacro = () => {
-    if (!form.macroName || form.progressionStyle !== "MACRO") {
+    if (!form.macro || form.progressionStyle !== "MACRO") {
       validMacro = false;
       return;
     }
-    validMacro = !!game.macros.getName(form.macroName);
+    validMacro = !!game.macros.getName(form.macro);
   };
   const openMacro = (e: MouseEvent) => {
     e.preventDefault();
-    if (!form.macroName || form.progressionStyle !== "MACRO") return;
-    game.macros.getName(form.macroName)?.sheet?.render(true);
+    if (!form.macro || form.progressionStyle !== "MACRO") return;
+    game.macros.getName(form.macro)?.sheet?.render(true);
   };
 </script>
 
@@ -164,7 +164,7 @@
 
     {#if form.progressionStyle === "MACRO"}
       <FormGroup label="Macro Name">
-        <input type="text" name="macro" bind:value={form.macroName} list={macrosId} oninput={checkMacro} />
+        <input type="text" name="macro" bind:value={form.macro} list={macrosId} oninput={checkMacro} />
         {#if validMacro}
           <button onclick={openMacro}>Open</button>
         {/if}

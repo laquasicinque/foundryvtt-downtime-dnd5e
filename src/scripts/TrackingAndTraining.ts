@@ -3,7 +3,7 @@ import TrackedItemApp from "./apps/TrackedItemApp.js";
 import { createTrackedItem } from "./TrackedItem.js";
 import { createCategory } from "./Category.js";
 import CONSTANTS from "./constants.js";
-import { runMacroOnExplicitActor } from "./lib/lib.js";
+import { runMacroOnActor, runMacroOnExplicitActor } from "./lib/lib.js";
 import { RetrieveHelpers } from "./lib/retrieve-helpers.js";
 import Logger from "./lib/Logger.js";
 import { localize } from "./utils/localize.js";
@@ -368,7 +368,7 @@ export const TrackingAndTraining = {
 
     // Progression Type: Macro
     else if (rollType === "MACRO") {
-      const macroName = activity.macroName;
+      const macroName = activity.macro;
       // let macro = game.macros.getName(macroName);
       const macro = await RetrieveHelpers.getMacroAsync(
         macroName,
@@ -378,7 +378,23 @@ export const TrackingAndTraining = {
       if (macro) {
         const macroData = [];
         // macro.execute();
-        runMacroOnExplicitActor(actor, macro, macroData);
+        // we pass a copy of the activity, modifications to it won't be reflected in our flags
+        const val = await runMacroOnActor(macro, actor, {
+          activity: foundry.utils.deepClone(activity),
+        });
+        if (Number.isNumeric(val)) {
+          activity = TrackingAndTraining.calculateNewProgress(
+            activity,
+            "Macro",
+            val,
+          );
+          TrackingAndTraining.checkCompletion(
+            actor,
+            activity,
+            alreadyCompleted,
+          );
+          await setActivities({ actor: world ? null : actor, items: allItems });
+        }
       } else {
         Logger.warn(
           localize("downtime-dnd5e.MacroNotFoundWarning") + ": " + macroName,
