@@ -43,4 +43,5 @@ export function registerTidy5eSheet(
   });
 
   api.registerCharacterTab(tab, { overrideExisting: true });
+  api.registerNpcTab(tab, { overrideExisting: true });
 }

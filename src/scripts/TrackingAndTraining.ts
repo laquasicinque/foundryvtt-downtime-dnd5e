@@ -3,7 +3,7 @@ import TrackedItemApp from "./apps/TrackedItemApp.js";
 import { createTrackedItem } from "./TrackedItem.js";
 import { createCategory } from "./Category.js";
 import CONSTANTS from "./constants.js";
-import { runMacroOnActor, runMacroOnExplicitActor } from "./lib/lib.js";
+import { runMacroOnActor } from "./lib/lib.js";
 import { RetrieveHelpers } from "./lib/retrieve-helpers.js";
 import Logger from "./lib/Logger.js";
 import { localize } from "./utils/localize.js";
@@ -179,7 +179,7 @@ export const TrackingAndTraining = {
         items: items.filter((item) => activity.id !== item.id),
       });
 
-      actor.sheet?.render(true);
+      // actor.sheet?.render(true);
     }
   },
 
@@ -238,7 +238,7 @@ export const TrackingAndTraining = {
     // Update flags and actor
     await setActivities({ actor: world ? undefined : actor, items: allItems });
 
-    actor.sheet?.render(true);
+    // actor.sheet?.render(true);
   },
 
   async progressItem(actorId: string, itemId: string, world = false) {
@@ -281,7 +281,7 @@ export const TrackingAndTraining = {
         // Update flags and actor
         await setActivities({ actor: world ? null : actor, items: allItems });
 
-        actor.sheet?.render(true);
+        // actor.sheet?.render(true);
       }
     }
 
@@ -306,7 +306,7 @@ export const TrackingAndTraining = {
         // Update flags and actor
         await setActivities({ actor: world ? null : actor, items: allItems });
 
-        actor.sheet?.render(true);
+        // actor.sheet?.render(true);
       }
     }
 
@@ -342,7 +342,7 @@ export const TrackingAndTraining = {
             await setActorActivities(actor, allItems);
           }
 
-          actor.sheet?.render(true);
+          // actor.sheet?.render(true);
         }
       } else {
         Logger.warn(localize("downtime-dnd5e.ToolNotFoundWarning"));
@@ -363,7 +363,7 @@ export const TrackingAndTraining = {
       // Update flags and actor
       await setActivities({ actor: world ? null : actor, items: allItems });
 
-      actor.sheet?.render(true);
+      // actor.sheet?.render(true);
     }
 
     // Progression Type: Macro
@@ -780,7 +780,7 @@ export const TrackingAndTraining = {
 
       Logger.info(localize("downtime-dnd5e.ImportComplete"), true);
 
-      actor.sheet?.render(true);
+      // actor.sheet?.render(true);
     });
     input.click();
   },

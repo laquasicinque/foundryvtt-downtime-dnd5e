@@ -29,43 +29,43 @@ export const initHooks = () => {
 };
 
 export const setupHooks = () => {
-  Hooks.on(
-    "renderActorSheetV2",
-    (
-      sheet: Downtime.ActorSheetApplication,
-      form: HTMLFormElement,
-      context,
-      options,
-    ) => {
-      const downtimeTab = form.querySelector(
-        'section[data-tab="downtime-dnd5e"]',
-      );
-      const mountRoot = downtimeTab?.querySelector("[data-svelte]");
-      const tabs = form.querySelector('[data-container-id="tabs"]');
+  const coreSheetHandler = (
+    sheet: Downtime.ActorSheetApplication,
+    form: HTMLFormElement,
+    context,
+    options,
+  ) => {
+    const downtimeTab = form.querySelector(
+      'section[data-tab="downtime-dnd5e"]',
+    );
+    const mountRoot = downtimeTab?.querySelector("[data-svelte]");
+    const tabs = form.querySelector('[data-container-id="tabs"]');
 
-      if (tabs && downtimeTab && mountRoot) {
-        tabs.append(downtimeTab);
-        const element = getSvelteElement(sheet);
-        if (element) {
-          mountRoot.replaceWith(element);
-          triggerUpdates(sheet);
-          return;
-        }
-        ensureSheetStoredValues(sheet);
-        setSvelteInstance(
-          sheet,
-          mount(SheetContent, {
-            target: mountRoot,
-            props: {
-              sheet,
-              actor: sheet.actor,
-            },
-          }),
-        );
-        setSvelteElement(sheet, mountRoot as HTMLElement);
+    if (tabs && downtimeTab && mountRoot) {
+      tabs.append(downtimeTab);
+      const element = getSvelteElement(sheet);
+      if (element) {
+        mountRoot.replaceWith(element);
+        triggerUpdates(sheet);
+        return;
       }
-    },
-  );
+      ensureSheetStoredValues(sheet);
+      setSvelteInstance(
+        sheet,
+        mount(SheetContent, {
+          target: mountRoot,
+          props: {
+            sheet,
+            actor: sheet.actor,
+          },
+        }),
+      );
+      setSvelteElement(sheet, mountRoot as HTMLElement);
+    }
+  };
+
+  Hooks.on("renderCharacterActorSheet", coreSheetHandler);
+  Hooks.on("renderNPCActorSheet", coreSheetHandler);
 
   Hooks.on("closeActorSheetV2", (sheet: Downtime.ActorSheetApplication) => {
     const instance = getSvelteInstance(sheet);
@@ -114,6 +114,15 @@ function addTabsToCoreSheets() {
     TABS: { label: string; tab: string; icon: string }[];
     PARTS: Record<string, { template: string }>;
   };
+
+  const npcSheet = (
+    "NPCActorSheet" in dnd5e.applications.actor
+      ? (dnd5e.applications.actor as any).NPCActorSheet
+      : dnd5e.applications.actor.NPCActorSheet
+  ) as dnd5e.applications.actor.ActorSheet5eNPC2 & {
+    TABS: { label: string; tab: string; icon: string }[];
+    PARTS: Record<string, { template: string }>;
+  };
   /**
    * Add the tab to the sidebar
    */
@@ -123,10 +132,20 @@ function addTabsToCoreSheets() {
     icon: "fas fa-clock",
   });
 
+  npcSheet.TABS.push({
+    label: "Downtime",
+    tab: CONSTANTS.MODULE_ID,
+    icon: "fas fa-clock",
+  });
+
   /**
    * Add the template
    */
   sheet.PARTS[CONSTANTS.MODULE_ID] = {
+    template: `modules/${CONSTANTS.MODULE_ID}/templates/training-section-v3.hbs`,
+  };
+
+  npcSheet.PARTS[CONSTANTS.MODULE_ID] = {
     template: `modules/${CONSTANTS.MODULE_ID}/templates/training-section-v3.hbs`,
   };
 }

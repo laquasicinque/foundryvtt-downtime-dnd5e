@@ -103,7 +103,7 @@ export default () => {
         //     dest: normalizePath(path.resolve(__dirname, `./dist/${s_MODULE_ID}/icons`)), // 2️
         //   },
           {
-            src: normalizePath(path.resolve(__dirname, './src/templates')) + '/[!.]*', // 1️
+            src: normalizePath(path.resolve(__dirname, './src/templates/*.hbs')), // 1️
             dest: normalizePath(path.resolve(__dirname, `./dist/${s_MODULE_ID}/templates`)), // 2️
           },
         //   {
