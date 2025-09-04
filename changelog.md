@@ -1,3 +1,12 @@
+### 13.0.0 [BETA]
+
+- Full upgrade for v13 ty to @laquasicinque for https://github.com/p4535992/foundryvtt-downtime-dnd5e/pull/30
+- Fix: https://github.com/p4535992/foundryvtt-downtime-dnd5e/issues/28
+- Fix: https://github.com/p4535992/foundryvtt-downtime-dnd5e/issues/25
+- Fix: https://github.com/p4535992/foundryvtt-downtime-dnd5e/issues/19
+- Fix: https://github.com/p4535992/foundryvtt-downtime-dnd5e/issues/18
+- Fix: https://github.com/p4535992/foundryvtt-downtime-dnd5e/issues/15
+
 ### 12.0.0
 
 - Fixed: https://github.com/p4535992/foundryvtt-downtime-dnd5e/issues/26 ty to @Mkeefeus contribution https://github.com/p4535992/foundryvtt-downtime-dnd5e/pull/27
