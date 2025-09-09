@@ -347,7 +347,6 @@ export const TrackingAndTraining = {
     // Progression Type: Simple
     else if (rollType === "FIXED") {
       const itemName = localize("downtime-dnd5e.ProgressionStyleFixed");
-      console.log({ activity });
       // Increase progress
       activity = TrackingAndTraining.calculateNewProgress(
         activity,
