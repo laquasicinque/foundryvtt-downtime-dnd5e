@@ -96,8 +96,10 @@ declare namespace Downtime {
   type TrackedItemV1Fixed = Prettify<
     {
       progressionStyle: "FIXED";
-      fixedIncrease: number;
-    } & TrackedItemBaseV1
+      fixed?: number;
+      fixedIncrease?: number;
+    } & TrackedItemBaseV1 &
+      ({ fixed: number } | { fixedIncrease: number })
   >;
 
   type TrackedItemV1Ability = Prettify<
