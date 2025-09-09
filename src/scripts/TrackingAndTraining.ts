@@ -336,12 +336,7 @@ export const TrackingAndTraining = {
             alreadyCompleted,
           );
           // Update flags and actor
-          if (world) {
-            await setWorldActivities(allItems);
-          } else {
-            await setActorActivities(actor, allItems);
-          }
-
+          await setActivities({ actor: world ? null : actor, items: allItems });
           // actor.sheet?.render(true);
         }
       } else {
@@ -352,11 +347,12 @@ export const TrackingAndTraining = {
     // Progression Type: Simple
     else if (rollType === "FIXED") {
       const itemName = localize("downtime-dnd5e.ProgressionStyleFixed");
+      console.log({ activity });
       // Increase progress
       activity = TrackingAndTraining.calculateNewProgress(
         activity,
         itemName,
-        activity.fixedIncrease,
+        activity.fixedIncrease! || activity.fixed! || 1,
       );
       // Log item completion
       TrackingAndTraining.checkCompletion(actor, activity, alreadyCompleted);
@@ -447,14 +443,14 @@ export const TrackingAndTraining = {
     let newProgress = item.progress;
 
     if (absolute) {
-      newProgress = value;
+      newProgress = Number(value);
     } else if (item.dc) {
       if (value >= item.dc) {
         newProgress = item.progress + 1;
       }
     } else {
       //if no dc set
-      newProgress = item.progress + value;
+      newProgress = item.progress + Number(value);
     }
 
     newProgress = clamp(newProgress, item.completionAt, 0);
