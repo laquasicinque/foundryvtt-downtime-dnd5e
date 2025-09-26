@@ -2,7 +2,7 @@
   "id": "downtime-dnd5e",
   "title": "Downtime (Dnd5e)",
   "description": "Adds a tab to the character sheet to keep track of downtime activities, training, spell scribing, faction reputation, quest progress, and anything else you can think of.",
-  "version": "13.0.3",
+  "version": "13.0.4",
   "authors": [
     {
       "name": "laquasicinque",
