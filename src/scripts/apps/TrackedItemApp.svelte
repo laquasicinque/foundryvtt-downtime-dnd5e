@@ -6,6 +6,7 @@
   import type { ObjectUnionMerged } from "../types";
   import { pluck } from "it-al";
   import ApplicationForm, { type WithApplicationFormProps } from "../components/ApplicationForm.svelte";
+  import type { Attachment } from "svelte/attachments";
 
   type TrackedItemAppProps = WithApplicationFormProps<{
     categories: Downtime.Category[];
@@ -46,9 +47,19 @@
     fixedIncrease: 1,
   });
 
+  let fixed = $state() as number | undefined
+
   $effect(() => {
     Object.assign(form, item);
+    fixed = item.fixed || item.fixedIncreased
   });
+
+  $effect(() => {
+    form.fixed = form.fixedIncrease = fixed
+  })
+
+  $inspect(form)
+  $inspect(item)
 
   const hint = $derived(localize(`${CONSTANTS.MODULE_ID}.${HINT_MAP[form.progressionStyle]}`));
   const id = $props.id();
@@ -70,6 +81,10 @@
     if (!form.macro || form.progressionStyle !== "MACRO") return;
     game.macros.getName(form.macro)?.sheet?.render(true);
   };
+
+  const filePickerValueFix: Attachment<foundry.applications.elements.HTMLFilePickerElement> = (el) => {
+    requestAnimationFrame(() => {el.value = form.img})
+  }
 </script>
 
 <ApplicationForm {onChange}>
@@ -84,7 +99,7 @@
     </FormGroup>
 
     <FormGroup label="Image">
-      <file-picker name="img" type="image">
+      <file-picker name="img" type="image" {@attach filePickerValueFix}>
         <input class="image" type="text" placeholder="path/to/file.ext" bind:value={form.img} />
         <button
           class="fa-solid fa-file-import fa-fw icon"
@@ -138,7 +153,7 @@
 
     {#if form.progressionStyle === "TOOL"}
       <FormGroup label="Tool">
-        <select name="tool">
+        <select name="tool" bind:value={form.tool}>
           {#each tools as tool}
             <option value={tool.value}>{tool.label}</option>
           {/each}
@@ -148,7 +163,7 @@
 
     {#if form.progressionStyle === "ABILITY"}
       <FormGroup label="Ability">
-        <select name="ability">
+        <select name="ability" bind:value={form.ability}>
           {#each abilities as ability}
             <option value={ability.value}>{ability.label}</option>
           {/each}
@@ -158,7 +173,7 @@
 
     {#if form.progressionStyle === "FIXED"}
       <FormGroup label="Fixed">
-        <input type="text" name="fixed" />
+        <input type="text" name="fixed" bind:value={fixed}/>
       </FormGroup>
     {/if}
 
