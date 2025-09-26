@@ -122,7 +122,24 @@ export default class TrackedItemApp extends SvelteApplicationMixin(
     form: HTMLFormElement,
     formData: FormDataExtended,
   ) {
-    const newItem = createTrackedItem(formData.object as any);
+    const changes = this.activity?.changes ?? [];
+    const newItem = createTrackedItem({ ...formData.object, changes } as any);
+
+    if (this.activity && newItem.progress !== this.activity.progress) {
+      const newChange = {
+        id: foundry.utils.randomID(),
+        timestamp: new Date(),
+        actionName: localize("downtime-dnd5e.AdjustProgressValue") + " (=)",
+        valueChanged: "progress",
+        oldValue: this.activity.progress,
+        newValue: newItem.progress,
+        user: game.user.name,
+        note: "",
+      } as Downtime.AuditLogV1;
+
+      changes.push(newChange);
+    }
+
     const activities = this.world
       ? getWorldActivities()
       : getActorActivities(this.actor);

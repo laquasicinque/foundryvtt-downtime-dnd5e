@@ -103,6 +103,7 @@ export default class AuditLogApp extends SvelteApplicationMixin(
           valueChanged: change.valueChanged,
           oldValue: change.oldValue,
           newValue: change.newValue,
+          result: change.newValue,
           diff: diffString,
         };
       })
