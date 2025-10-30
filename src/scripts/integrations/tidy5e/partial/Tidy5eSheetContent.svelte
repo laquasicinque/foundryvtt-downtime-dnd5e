@@ -107,14 +107,14 @@
   const activitiesActorUncategorized = $derived(
     formattedActorActivities.filter(
       (activity) =>
-        !(activity.category && categoriesActorIds.has(activity.category))
+        !(activity.category || categoriesActorIds.has(activity.category))
     )
   );
 
   const activitiesWorldUncategorized = $derived(
     formattedWorldActivities.filter(
       (activity) =>
-        !(activity.category && categoriesWorldIds.has(activity.category))
+        !(activity.category || categoriesWorldIds.has(activity.category))
     )
   );
 
