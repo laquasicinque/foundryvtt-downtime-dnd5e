@@ -239,38 +239,17 @@ function getTemplateData(data) {
   return data;
 }
 
-// Determines whether or not the sheet should have its width adjusted.
-// If the setting for extra width is set, and if the sheet is of a type for which
-// we have training enabled, this returns true.
-function adjustSheetWidth(app: Downtime.ActorSheetApplication) {
-  let settingEnabled = !!settings.extraSheetWidth;
-
-  let sheetHasTab =
-    (app.actor.type === "npc" && settings.enableTrainingNpc) ||
-    (app.actor.type === "character" && settings.enableTraining);
-  let currentWidth = app.position.width!;
-  let defaultWidth = app.options.width!;
-  let sheetIsSmaller = currentWidth < defaultWidth + settings.extraSheetWidth;
-  let sheetIsMonsterBlock = app.options.classes.includes("monsterblock");
-
-  return (
-    settingEnabled && sheetHasTab && sheetIsSmaller && !sheetIsMonsterBlock
-  );
-}
-
 async function migrateAllActors() {
   const LATEST_MIGRATION = 1;
 
   let updatesRequired = [];
 
   // Start loop through actors
-  const currentUserId = game.userId as string;
   const currentUserIsGm = game.user.isGM;
   for (const actor of game.actors.contents as Iterable<
     dnd5e.documents.Actor5e<"character">
   >) {
-    const currentUserOwnsActor =
-      actor.permission === CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER;
+    const currentUserOwnsActor = actor.isOwner;
     // If the user can't update the actor, skip it
     if (!currentUserOwnsActor && !currentUserIsGm) {
       Logger.debug(localize("downtime-dnd5e.Skipping") + ": " + actor.name);
@@ -303,107 +282,100 @@ async function migrateAllActors() {
 
   if (updatesRequired.length > 0) {
     // Prompt to see if the user wants to update their actors.
-    let doUpdate = false;
-    let content = `<h3>${localize("downtime-dnd5e.MigrationPromptTitle")}</h3>
+    const content = `<h3>${localize("downtime-dnd5e.MigrationPromptTitle")}</h3>
                    <p>${localize("downtime-dnd5e.MigrationPromptText1")}</p>
                    <h3>${localize("downtime-dnd5e.MigrationPromptBackupWarning")}</h3>
                    <p>${localize("downtime-dnd5e.MigrationPromptText2")}</p>
                    <hr>
                    <p>${localize("downtime-dnd5e.MigrationPromptText3", { num: String(updatesRequired.length) })}</p>`;
     // Insert dialog
-    new Dialog({
-      title: `${CONSTANTS.MODULE_ID}`,
+    const doUpdate = await foundry.applications.api.DialogV2.confirm({
+      window: { title: `${CONSTANTS.MODULE_ID}` },
       content: content,
-      buttons: {
-        yes: {
-          icon: "<i class='fas fa-check'></i>",
-          label: localize("downtime-dnd5e.MigrationPromptYes"),
-          callback: () => (doUpdate = true),
-        },
-        no: {
-          icon: "<i class='fas fa-times'></i>",
-          label: localize("downtime-dnd5e.MigrationPromptNo"),
-          callback: () => (doUpdate = false),
-        },
+      yes: {
+        icon: "fas fa-check",
+        label: localize("downtime-dnd5e.MigrationPromptYes"),
       },
-      default: "no",
-      close: async (html) => {
-        // If they said yes, we migrate
-        if (doUpdate) {
-          for (var i = 0; i < updatesRequired.length; i++) {
-            let thisUpdate = updatesRequired[i];
-            let a = thisUpdate.actor;
-            let allTrainingItems = thisUpdate.items;
+      no: {
+        icon: "fas fa-times",
+        label: localize("downtime-dnd5e.MigrationPromptNo"),
+      },
+    });
 
-            // Backup old data and store in backup flag
-            let backup = {
-              trainingItems: allTrainingItems,
-              timestamp: new Date(),
-            };
-            Logger.info(
-              localize("downtime-dnd5e.BackingUpDataFor") + ": " + a.name,
-              true,
-            );
-            Logger.debug(
-              localize("downtime-dnd5e.BackingUpDataFor") + ": " + a.name,
-            );
-            await a.setFlag(
-              CONSTANTS.MODULE_ID,
-              CONSTANTS.FLAGS.backup,
-              backup,
-            );
+    // If they said yes, we migrate
+    if (doUpdate) {
+      for (var i = 0; i < updatesRequired.length; i++) {
+        let thisUpdate = updatesRequired[i];
+        let a = thisUpdate.actor;
+        let allTrainingItems = thisUpdate.items;
 
-            // Alert that we're migrating actor
-            Logger.info(
-              localize("downtime-dnd5e.UpdatingDataFor") + ": " + a.name,
-              true,
-            );
-            Logger.debug(
-              localize("downtime-dnd5e.UpdatingDataFor") + ": " + a.name,
-            );
+        // Backup old data and store in backup flag
+        let backup = {
+          trainingItems: allTrainingItems,
+          timestamp: new Date(),
+        };
+        Logger.info(
+          localize("downtime-dnd5e.BackingUpDataFor") + ": " + a.name,
+          true,
+        );
+        Logger.debug(
+          localize("downtime-dnd5e.BackingUpDataFor") + ": " + a.name,
+        );
+        await a.setFlag(
+          CONSTANTS.MODULE_ID,
+          CONSTANTS.FLAGS.backup,
+          backup,
+        );
 
-            // Loop through items and update if they need updates
-            for (var j = 0; j < allTrainingItems.length; j++) {
-              if (allTrainingItems[j].updateMe) {
-                try {
-                  if (allTrainingItems[j].schemaVersion < 1) {
-                    allTrainingItems[j] = migrateToVersion1(
-                      allTrainingItems[j],
-                    );
-                  }
-                  // Repeat line for new versions as needed
-                } catch (err) {
-                  Logger.error(
-                    localize("downtime-dnd5e.ProblemUpdatingDataFor") +
-                      ": " +
-                      a.data.name,
-                    true,
-                    err,
-                  );
-                }
-                delete allTrainingItems[j].updateMe;
+        // Alert that we're migrating actor
+        Logger.info(
+          localize("downtime-dnd5e.UpdatingDataFor") + ": " + a.name,
+          true,
+        );
+        Logger.debug(
+          localize("downtime-dnd5e.UpdatingDataFor") + ": " + a.name,
+        );
+
+        // Loop through items and update if they need updates
+        for (var j = 0; j < allTrainingItems.length; j++) {
+          if (allTrainingItems[j].updateMe) {
+            try {
+              if (allTrainingItems[j].schemaVersion < 1) {
+                allTrainingItems[j] = migrateToVersion1(
+                  allTrainingItems[j],
+                );
               }
+              // Repeat line for new versions as needed
+            } catch (err) {
+              Logger.error(
+                localize("downtime-dnd5e.ProblemUpdatingDataFor") +
+                  ": " +
+                  a.name,
+                true,
+                err,
+              );
             }
-            await a.setFlag(
-              CONSTANTS.MODULE_ID,
-              CONSTANTS.FLAGS.trainingItems,
-              allTrainingItems,
-            );
-            Logger.info(
-              localize("downtime-dnd5e.SuccessUpdatingDataFor") +
-                ": " +
-                a.data.name,
-              true,
-            );
-            Logger.debug(
-              localize("downtime-dnd5e.SuccessUpdatingDataFor") +
-                ": " +
-                a.data.name,
-            );
+            delete allTrainingItems[j].updateMe;
           }
         }
-      },
-    }).render(true);
+        await a.setFlag(
+          CONSTANTS.MODULE_ID,
+          CONSTANTS.FLAGS.trainingItems,
+          allTrainingItems,
+        );
+        Logger.info(
+          localize("downtime-dnd5e.SuccessUpdatingDataFor") +
+            ": " +
+            a.name,
+          true,
+        );
+        Logger.debug(
+          localize("downtime-dnd5e.SuccessUpdatingDataFor") +
+            ": " +
+            a.name,
+        );
+      }
+    }
   }
 }
 
