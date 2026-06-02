@@ -71,8 +71,8 @@
   "styles": ["module.css"],
   "compatibility": {
     "minimum": 13,
-    "verified": 13,
-    "maximum": 13
+    "verified": 14,
+    "maximum": 14
   },
   "url": "https://github.com/laquasicinque/foundryvtt-downtime-dnd5e",
   "manifest": "https://github.com/laquasicinque/foundryvtt-downtime-dnd5e/releases/download/13.0.0/module.json",
