@@ -141,6 +141,7 @@
   {/snippet}
   {#snippet body()}
     {#each category.activities as activity (activity.id)}
+    {#if !activity.hidden || isGm}
       <TidyTableRow
         rowAttributes={{ "data-tidy-draggable": true }}
         rowContainerAttributes={{
@@ -238,6 +239,7 @@
           </ExpandableContainer>
         {/snippet}
       </TidyTableRow>
+    {/if}
     {/each}
   {/snippet}
 </TidyTable>

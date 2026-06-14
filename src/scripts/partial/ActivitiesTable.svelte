@@ -112,6 +112,7 @@
     {/if}
   {/snippet}
   {#each category.activities as activity}
+    {#if !activity.hidden || isGm}
     {@const expanded = isExpanded(activity)}
     <DndTableRow
       draggable={true}
@@ -198,6 +199,7 @@
         <p>{activity.description}</p>
       {/snippet}
     </DndTableRow>
+    {/if}
   {/each}
 </DndTable>
 </div>
