@@ -112,7 +112,7 @@
     </FormGroup>
 
     <FormGroup label="Hidden from players?">
-      <input type="checkbox" name="hidden" bind:value={form.hidden} />
+      <input type="checkbox" name="hidden" bind:checked={form.hidden} />
     </FormGroup>
 
     <FormGroup label="Category">
