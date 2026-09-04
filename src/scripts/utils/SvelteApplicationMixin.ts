@@ -1,57 +1,75 @@
 import type { DeepPartial, Mixin } from "fvtt-types/utils";
 import { mount, unmount } from "svelte";
-import type { ExtendedButton } from "../components/FormButtons.svelte";
+import type { MaybeGetter } from "../types";
 
-const { ApplicationV2 } = foundry.applications.api;
+type ExtendedButton = foundry.applications.api.DialogV2.Button & {
+    hide?: () => unknown;
+    disabled?: MaybeGetter<boolean>;
+};
 
 type ConstructorOf<T> = new (...args: any[]) => T;
 
 function SvelteApplicationMixin<
-    BaseClass extends ConstructorOf<foundry.applications.api.ApplicationV2<any, Configuration, any>>,
+    BaseClass extends ConstructorOf<
+        foundry.applications.api.ApplicationV2<any, Configuration, any>
+    >,
 >(BaseApplication: BaseClass) {
     // @ts-expect-error
     class SvelteApplication<
         // BaseClass is the class being mixed. This is given by `HandlebarsApplicationMixin`.
-        BaseClassI extends ConstructorOf<foundry.applications.api.ApplicationV2<any, any, any>> = BaseClass,
+        BaseClassI extends ConstructorOf<
+            foundry.applications.api.ApplicationV2<any, any, any>
+        > = BaseClass,
         // These type parameters should _never_ be explicitly assigned to. They're
         // simply a way to make types more readable so that their names show up in
         // intellisense instead of a transformation of `BaseClass`.
-        out RenderOptions extends foundry.applications.api.ApplicationV2.RenderOptions = BaseClassI extends ConstructorOf<
-            foundry.applications.api.ApplicationV2<any, any, infer _RenderOptions>
-        >
-        ? _RenderOptions
-        : never,
+        out RenderOptions extends
+            foundry.applications.api.ApplicationV2.RenderOptions =
+            BaseClassI extends ConstructorOf<
+                foundry.applications.api.ApplicationV2<
+                    any,
+                    any,
+                    infer _RenderOptions
+                >
+            >
+                ? _RenderOptions
+                : never,
         out RenderContext extends object = BaseClassI extends ConstructorOf<
-            foundry.applications.api.ApplicationV2<any, any, infer _RenderContext>
+            foundry.applications.api.ApplicationV2<
+                any,
+                any,
+                infer _RenderContext
+            >
         >
-        ? _RenderContext
-        : never,
+            ? _RenderContext
+            : never,
     > extends BaseApplication {
         declare props: Record<string, any>;
 
         #componentInstance: Record<string, any> | null = null;
 
-        protected override async close(options: DeepPartial<SvelteApplicationMixin.ClosingOptions> = {}): Promise<this> {
+        protected override async close(
+            options: DeepPartial<SvelteApplicationMixin.ClosingOptions> = {},
+        ): Promise<this> {
             // Destroy Component instance
             if (this.#componentInstance) {
-                unmount(this.#componentInstance);
+                void unmount(this.#componentInstance);
                 this.#componentInstance = null;
             }
 
             options.animate = false;
-            return super.close(options);
+            return super.close(options) as Promise<this>;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        override async _prepareContext(options: SvelteApplicationMixin.RenderOptions) {
+        override async _prepareContext(
+            options: SvelteApplicationMixin.RenderOptions,
+        ) {
             const context: Record<string, any> = {};
             return context;
         }
 
         override async _renderHTML(
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             context: RenderContext,
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             options: DeepPartial<RenderOptions>,
         ): Promise<any> {
             // Update context for props
@@ -59,13 +77,17 @@ function SvelteApplicationMixin<
             return "";
         }
 
-        override _replaceHTML() { }
+        override _replaceHTML() {}
 
-        override async _renderFrame(options: SvelteApplicationMixin.RenderOptions) {
+        override async _renderFrame(
+            options: SvelteApplicationMixin.RenderOptions,
+        ) {
             const context = await this._prepareContext(options);
             const frame = await super._renderFrame(options);
 
-            const target = this.hasFrame ? frame.querySelector(".window-content") : frame;
+            const target = this.hasFrame
+                ? frame.querySelector(".window-content")
+                : frame;
             if (!target) return frame;
 
             const { component } = this.options.svelte ?? {};
@@ -75,9 +97,11 @@ function SvelteApplicationMixin<
             target.innerContent = "";
 
             const obj = {
-                ...(this.options.buttons ? { buttons: this.options.buttons } : {}),
+                ...(this.options.buttons
+                    ? { buttons: this.options.buttons }
+                    : {}),
                 sheet: this,
-                actor: "actor" in this ? this.actor : undefined
+                actor: "actor" in this ? this.actor : undefined,
             };
 
             this.#componentInstance = mount(component, {
@@ -103,12 +127,16 @@ function SvelteApplicationMixin<
             const form = event.currentTarget as HTMLFormElement;
             const formData = new foundry.applications.ux.FormDataExtended(form);
 
-            if (handler instanceof Function) await handler.call(this, event, form, formData);
+            if (handler instanceof Function)
+                await handler.call(this, event, form, formData);
             if (closeOnSubmit) await this.close();
         }
     }
 
-    return SvelteApplication as Mixin<typeof SvelteApplication<BaseClass>, BaseClass>;
+    return SvelteApplication as Mixin<
+        typeof SvelteApplication<BaseClass>,
+        BaseClass
+    >;
 }
 
 export type SvelteApplicationSvelteOptions = {

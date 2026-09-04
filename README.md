@@ -63,7 +63,7 @@ All informations about the api can be found here [API](./wiki/API.md)
 ## Install all packages
 
 ```bash
-npm install
+vp install
 ```
 
 ### dev
@@ -71,17 +71,17 @@ npm install
 `dev` will let you develop you own code with hot reloading on the browser
 
 ```bash
-npm run dev
+vp dev
 ```
 
-## npm build scripts
+## Vite+ scripts
 
 ### build
 
 `build` will build and set up a symlink between `dist` and your `dataPath`.
 
 ```bash
-npm run build
+vp run build
 ```
 
 ### build-watch
@@ -89,29 +89,29 @@ npm run build
 `build-watch` will build and watch for changes, rebuilding automatically.
 
 ```bash
-npm run build-watch
+vp run build:watch
 ```
 
-### prettier-format
+### format
 
-`prettier-format` launch the prettier plugin based on the configuration [here](./.prettierrc)
+`format` checks formatting with Vite+.
 
 ```bash
-npm run-script prettier-format
+vp fmt
 ```
 
 ### lint and lint:fix
 
-`lint` launch the eslint process based on the configuration [here](./.eslintrc.json)
+`lint` checks code with Vite+.
 
 ```bash
-npm run-script lint
+vp lint
 ```
 
-`lint:fix` launch the eslint process with the fix argument
+`lint:fix` runs the Vite+ linter with fixes enabled.
 
 ```bash
-npm run-script lint:fix
+vp run lint:fix
 ```
 
 ## [Changelog](./changelog.md)
