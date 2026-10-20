@@ -1,24 +1,5 @@
-import { registerSettings } from "./scripts/settings.js";
-import { initHooks, readyHooks, setupHooks } from "./scripts/5e-training.js";
+import { onceHook } from "./foundry/hooks";
+import { init, ready } from "./runtime";
 
-/* ------------------------------------ */
-/* Initialize module					*/
-/* ------------------------------------ */
-Hooks.once("init", async () => {
-  registerSettings();
-  initHooks();
-});
-
-/* ------------------------------------ */
-/* Setup module							*/
-/* ------------------------------------ */
-Hooks.once("setup", function () {
-  setupHooks();
-});
-
-/* ------------------------------------ */
-/* When ready							*/
-/* ------------------------------------ */
-Hooks.once("ready", async () => {
-  readyHooks();
-});
+onceHook("init", init);
+onceHook("ready", ready);

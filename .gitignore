@@ -119,3 +119,6 @@ foundry.js
 /package
 /.vite-cache
 /package-lock.json
+
+# svelte-check --tsgo writes transpiled Svelte files here
+.svelte-check/

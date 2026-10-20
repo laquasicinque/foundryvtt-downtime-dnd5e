@@ -18,9 +18,12 @@ All that feedback has really encouraged me to open up what you can do with the m
 * Create skill challenges
 * And a whole lot more!
 
-Feel free to browse through the wiki to get a better idea of how it all works and what it looks like!
+Feel free to browse through the wiki to get a better idea of how it all works:
 
-![](./images/char_sheet.png)
+- [User Guide](./User-Guide.md)
+- [Example Macros](./Example-Macros.md)
+- [API](./API.md)
+- [Module Compatibility](./Module-Compatibility.md)
 
 # Thank You!
 

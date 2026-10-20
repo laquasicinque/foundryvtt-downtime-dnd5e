@@ -28,7 +28,42 @@ export default defineConfig({
         jsPlugins: [
             { name: "vite-plus", specifier: "vite-plus/oxlint-plugin" },
         ],
-        rules: { "vite-plus/prefer-vite-plus-imports": "error" },
+        rules: {
+            "vite-plus/prefer-vite-plus-imports": "error",
+            // Foundry and dnd5e are reached only through src/foundry and src/dnd5e,
+            // so supporting other versions means changing those folders alone.
+            "no-restricted-globals": [
+                "error",
+                ...[
+                    "game",
+                    "CONFIG",
+                    "CONST",
+                    "foundry",
+                    "dnd5e",
+                    "ui",
+                    "Hooks",
+                    "ChatMessage",
+                    "Roll",
+                    "Macro",
+                    "Item",
+                    "Actor",
+                    "TextEditor",
+                    "canvas",
+                    "fromUuid",
+                    "fromUuidSync",
+                ].map((name) => ({
+                    name,
+                    message:
+                        "Use a wrapper from src/foundry or src/dnd5e (add one if needed).",
+                })),
+            ],
+        },
+        overrides: [
+            {
+                files: ["src/foundry/**", "src/dnd5e/**", "src/tests/**"],
+                rules: { "no-restricted-globals": "off" },
+            },
+        ],
         options: { typeAware: true, typeCheck: true },
     },
     fmt: {
@@ -44,9 +79,14 @@ export default defineConfig({
             "/.vscode/",
             "/.idea",
             ".vite-cache/**",
+            ".svelte-check/**",
             "**/*.md",
-            "/src/packs",
         ],
+    },
+    test: {
+        // Relative to `root` (src/). Tests live in src/tests/, mirroring src/; shared helpers are in src/tests/helpers/.
+        include: ["tests/**/*.test.ts"],
+        environment: "node",
     },
     root: "src/", // Source location / esbuild root.
     base: `/${s_PACKAGE_ID}/`, // Base module path that 30001 / served dev directory.
@@ -73,8 +113,9 @@ export default defineConfig({
             usePolling: true, // Ensures file changes are detected
         },
         proxy: {
-            // Serves static files from main Foundry server.
-            [`^(/${s_PACKAGE_ID}/(images|fonts|assets|lang|languages|packs|styles|templates|style.css))`]:
+            // Serves static files from main Foundry server. Languages and templates
+            // are left to Vite so they come from src/, not the installed release.
+            [`^(/${s_PACKAGE_ID}/(images|fonts|assets|packs|styles|style.css))`]:
                 "http://127.0.0.1:30000",
 
             // All other paths besides package ID path are served from main Foundry server.
@@ -92,45 +133,29 @@ export default defineConfig({
         minify: s_COMPRESS ? ("terser" as const) : false,
         target: ["es2022", "chrome100"],
         lib: {
-            entry: path.resolve(configDir, "./src/" + s_ENTRY_JAVASCRIPT), // "./module.svelte.ts"
+            entry: path.resolve(configDir, "./src/" + s_ENTRY_JAVASCRIPT),
             formats: ["es" as const],
             fileName: "module",
         },
         rollupOptions: {
-            external: ["pixi.js", "tidy5e-sheet"], // Prevent bundling PIXI.js
+            external: ["pixi.js"], // Provided by Foundry
         },
     },
 
     plugins: lazyPlugins(() => [
         viteStaticCopy({
             targets: [
-                //   {
-                //     src: normalizePath(path.resolve(configDir, './src/assets')) + '/[!.]*', // 1️
-                //     dest: normalizePath(path.resolve(configDir, `./dist/${s_MODULE_ID}/assets`)), // 2️
-                //   },
-                //   {
-                //     src: normalizePath(path.resolve(configDir, './src/images')) + '/[!.]*', // 1️
-                //     dest: normalizePath(path.resolve(configDir, `./dist/${s_MODULE_ID}/images`)), // 2️
-                //   },
-                //   {
-                //     src: normalizePath(path.resolve(configDir, './src/icons')) + '/[!.]*', // 1️
-                //     dest: normalizePath(path.resolve(configDir, `./dist/${s_MODULE_ID}/icons`)), // 2️
-                //   },
                 {
                     src: normalizePath(
                         path.resolve(configDir, "./src/templates/*.hbs"),
-                    ), // 1️
+                    ),
                     dest: normalizePath(
                         path.resolve(
                             configDir,
                             `./dist/${s_MODULE_ID}/templates`,
                         ),
-                    ), // 2️
+                    ),
                 },
-                //   {
-                //     src: normalizePath(path.resolve(configDir, './src/lang')) + '/[!.]*',
-                //     dest: normalizePath(path.resolve(configDir, `./dist/${s_MODULE_ID}/lang`)),
-                //   },
                 {
                     src: normalizePath(
                         path.resolve(configDir, "./src/languages/*.json"),
@@ -142,14 +167,6 @@ export default defineConfig({
                         ),
                     ),
                 },
-                //   {
-                //     src: normalizePath(path.resolve(configDir, './src/styles')) + '/**/*.css',
-                //     dest: normalizePath(path.resolve(configDir, `./dist/${s_MODULE_ID}/styles`)),
-                //   },
-                //   {
-                //     src: normalizePath(path.resolve(configDir, './src/packs')) + '/[!.^(_?.*)]*', // + '/[!.^(_source)]*',
-                //     dest: normalizePath(path.resolve(configDir, `./dist/${s_MODULE_ID}/packs`)),
-                //   },
                 {
                     src: normalizePath(
                         path.resolve(configDir, "./src/module.json"),
@@ -158,10 +175,6 @@ export default defineConfig({
                         path.resolve(configDir, `./dist/${s_MODULE_ID}/`),
                     ),
                 },
-                //       {
-                //     src: normalizePath(path.resolve(configDir, './src/scripts/libs')) + '/[!.]*',
-                //     dest: normalizePath(path.resolve(configDir, `./dist/${s_MODULE_ID}/scripts/libs`)),
-                //   },
             ],
         }) as PluginOption,
         svelte({

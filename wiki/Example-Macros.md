@@ -1,122 +1,93 @@
-Here are just a few sample macros to get you started. I'll be adding more over time.
-
-### Roll a D20 and add result to progress
-This is a simple macro that rolls a d20, then adds the result to the progress of actor Joe Smith's tracked item called Roll Lots of D20s.
+A few sample macros to get you started. They use the module API (see [API](./API.md)); every write goes to the GM, so players can run the ones that only touch their own characters.
 
 ```js
-// Specify our actor and the item we want to deal with.
-let actorName = `Joe Smith`;
-let itemName = `Roll Lots of D20s`;
-
-// This command takes the names we just specified and fetches the appropriate item.
-let item = game.modules.get('downtime-dnd5e').api.getActivity(actorName, itemName);
-
-// Roll the dice! Adding some flavor to describe what the roll is for while we're here.
-let roll = new Roll('1d20').roll();
-roll.toMessage({flavor:"Increasing our progress by 1d20"});
-
-// Now let's get the result so we can use it.
-// The parseInt around the roll ensures we get a number, rather than a string.
-let result = parseInt(roll.result);
-
-// Figure out what we want our new progress value to be.
-// This is the item's current progress + the result of our d20 roll.
-let newProgress = item.progress + result;
-
-// Now we update! This function takes the name of the actor and item we specified at the start,
-// then finds that item and sets its progress to some new value we specify.
-game.modules.get('downtime-dnd5e').api.updateActivityProgress(actorName, itemName, newProgress);
-
-// All done!
+const downtime = game.modules.get("downtime-dnd5e").api;
 ```
 
-***
+Tracked items are found by **id** in the API. These examples look one up by name first, which is fine for a macro you keep for one item.
 
-### Barebones Macro - Modify Tracked Item Progress
-This is a template you can use to do whatever you want with. It contains the bare minimum you need to get by modifying an item's progress value.
+### Roll a d20 and add the result to progress
 
 ```js
-// Specify our actor and the item we want to deal with.
-let actorName = `Actor Name`;
-let itemName = `Item Name`;
-let item = game.modules.get('downtime-dnd5e').api.getActivity(actorName, itemName);
-let newProgressValue;
+const downtime = game.modules.get("downtime-dnd5e").api;
+const actor = game.actors.getName("Joe Smith");
+const item = (await downtime.getItems(actor)).find((i) => i.name === "Roll Lots of D20s");
 
-// Do stuff here.
-// Make sure at some point you set newProgressValue equal to some integer before you hit the last line.
-    
-// Make the update
-game.modules.get('downtime-dnd5e').api.updateActivityProgress(actorName, itemName, newProgressValue);
+const roll = await new Roll("1d20").evaluate();
+await roll.toMessage({ flavor: `Progress on ${item.name}` });
+
+// adjust() changes progress by an amount (GM). Milestones fire as usual.
+await downtime.adjust(actor, item.id, roll.total);
 ```
 
-***
-
-### Skill Check with DC and Variable Increase
-Rolls a designated skill check. If the check meets the DC, progress is increased by an amount equal to some other defined roll.
+### Set progress to a value
 
 ```js
-// ======= CONFIG ========
+const downtime = game.modules.get("downtime-dnd5e").api;
+const actor = game.actors.getName("Actor Name");
+const item = (await downtime.getItems(actor)).find((i) => i.name === "Item Name");
 
-let actorName = `Test Doggo`; //The name of the actor who owns the activity to update.
-let itemName = `Crafting Example`; // The name of the activity to update.
-let checkDc = 15; // The DC of the check
-let skillToRoll = `med`; // The abbreviation of the skill to roll.
-let increaseBy = `1d10`; // The die roll to increase the progress by if the check succeeds.
+// set() with reason "API" is also allowed for the character's owner.
+await downtime.set(actor, item.id, 42, { reason: "API" });
+```
 
-// ==========================
+### Skill check with a DC and a variable increase
 
-// Get our actor and item
-let item = game.modules.get('downtime-dnd5e').api.getActivity(actorName, itemName);
-let actor = game.actors.getName(actorName);
+Usually you'd give the item a **Skill check** method with a DC and results instead (no macro needed). As a macro:
 
-// Make necessary rolls
-let skillRoll = await actor.rollSkill(skillToRoll);
-let total = skillRoll.total;
+```js
+const downtime = game.modules.get("downtime-dnd5e").api;
+const actor = game.actors.getName("Test Doggo");
+const item = (await downtime.getItems(actor)).find((i) => i.name === "Crafting Example");
 
-// If total is high enough, roll and increase progress
-if(total >= checkDc){
-    let increaseRoll = await new Roll(increaseBy).toMessage();
-    let increase = increaseRoll._roll._total;
-    let newProgress = item.progress + increase;
-    game.modules.get('downtime-dnd5e').api.updateActivityProgress(actorName, itemName, newProgress);
+const [check] = await actor.rollSkill({ skill: "med", target: 15 });
+if (check.total >= 15) {
+    const increase = await new Roll("1d10").evaluate();
+    await increase.toMessage({ flavor: "Crafting progress" });
+    await downtime.adjust(actor, item.id, increase.total);
 }
 ```
 
-***
+### A method macro (the item's own "Macro" method)
 
-### Add a new tracked item to an actor (v0.6.2)
-Create a new tracked item on an actor. Comments should provide context on available values
+A tracked item's **Macro** method runs a macro when it's used and adds whatever the macro returns: a number, `{ delta }`, `{ roll }` (resolved against the method's results), or nothing for no change. The macro gets `actor` and a `downtime` object with the item, its state and the method.
 
 ```js
-// Define our actor and get current tracked items
-let actorName = "Test Actor";
-let a = game.actors.getName(actorName);
-let allTrackedItems = game.modules.get('downtime-dnd5e').api.getActivitiesForActor(actorName);
-
-// Create a new tracked item
-// ability, skill, tool, fixedIncrease, macroName are mutually exclusive. Only set one of them. Which you use will depend on what you set as progressionStyle.
-let newItem = {
-  id: randomID(),
-  name: "Activity Name",
-  img: "icons/svg/book.svg",
-  description: "",
-  category: "", // The id of the category. Can be found in the "downtime-dnd5e", "categories" flags
-  progressionStyle: "ABILITY", // "ABILITY", "SKILL", "TOOL", "MACRO", "FIXED"
-  ability: "str", // ABILITY ONLY: any of the ability abbreviations
-  skill: null, // SKILL ONLY: any of the skill abbreviations
-  tool: null, // TOOL ONLY: this would be the ID of a tool on the actor's sheet
-  fixedIncrease: null, // FIXED ONLY: this would be the flat value to increase progress by
-  macroName: null, // MACRO ONLY: this would be the name/id/uuid of the macro to run
-  dc: null, // ABILITY,SKILL,TOOL: if set, this will have DC
-  progress: 0,
-  completionAt: game.settings.get("downtime-dnd5e", "totalToComplete"),
-  changes: [],
-  schemaVersion: 1 
-};
-
-// Add new activity to array
-allTrackedItems.push(newItem);
-
-// Set flag
-a.setFlag("downtime-dnd5e", "trainingItems", allTrackedItems);
+// Progress equals the character's Intelligence modifier, at least 1.
+return Math.max(1, actor.system.abilities.int.mod);
 ```
+
+### Add a tracked item to a character
+
+```js
+const downtime = game.modules.get("downtime-dnd5e").api;
+const actor = game.actors.getName("Test Actor");
+
+// Partial data is filled in with defaults: no methods or milestones unless you give them.
+const item = await downtime.createItem(actor, {
+    name: "Learn Elvish",
+    img: "icons/sundries/books/book-open-brown.webp",
+    progress: { target: 10, min: 0, max: 10 },
+    methods: [
+        {
+            id: foundry.utils.randomID(),
+            kind: "FIXED",
+            name: "Lessons",
+            effect: { delta: { kind: "STATIC", value: 1 } },
+            countsAs: "SUCCESS",
+        },
+    ],
+    milestones: [
+        {
+            id: foundry.utils.randomID(),
+            label: "Fluent",
+            at: 10,
+            match: "CROSS",
+            maxTimes: 1, // once; null would fire every time progress crosses 10
+            actions: [{ id: foundry.utils.randomID(), kind: "COMPLETE" }],
+        },
+    ],
+});
+```
+
+The easier way to make one is **Add item** on the sheet, which has ready-made starters.

@@ -1,123 +1,123 @@
-This page aims to provide a little bit more information about how to use the module and what its functions do.
+How to use the module, from both sides of the screen. (Screenshots to follow.)
 
-# Module Settings
-WIP
+# The Downtime tab
 
-# The Character Sheet Tab
-No matter what you decide to call the tab, all of this module's features live inside it. The tab will be displayed only on actor types specified by the module settings, and only to users who have permission to edit the sheet. 
+Every character and NPC sheet gets a **Downtime** tab (core dnd5e sheets and Tidy5e). It has two lists:
 
-It might look a little different depending on what sheet module you're using, but the tab will look something like this:
+- **Character downtimes**: this character's own tracked items.
+- **World downtimes**: shared by everyone, like rebuilding a bridge the whole party works on. When you use one from a sheet, that sheet's character is the one doing it.
 
-![](./images/char_sheet.png)
+Each list is grouped by category.
 
-Let's walk through each of the elements on the page and explain what they do!
+## A tracked item
 
-## Module Controls
-The bar of buttons just below the sheet navigation bar contains the following:
-- Export: Allows you to export the current actor's tracked items.
-- Import: Allows you to import tracked items from a JSON file.
-- Change Log: Opens up a window showing a log of the changes made to each of the actor's tracked items.
-- Add Category: Opens the Create Category dialog.
-- Add Item: Opens the Create Tracked Item dialog.
+A row shows the item's picture, name and a progress bar. Click the name to expand it: the description, then each **method** (a way to make progress) on its own line, with what it does ("Athletics · DC 12 · +1 on a pass"), any usage limit ("2 uses left") and why it can't be used right now, if it can't.
 
-All of these buttons are visible to both players and GM's.
+Click a method to use it. Checks roll through dnd5e as usual (advantage, situational bonuses, roll modes); tool checks let you pick which tool and which of its activities. The result goes to chat as one card: the roll, what it was worth, progress before and after, and any milestones it reached.
 
-## Tracked Items List
-Below the Module Controls you'll find the list of items the actor is tracking. These will be divided by category, and ordered within each category A-Z.
+The progress bar shows how far along it is. Items that can go negative (a reputation, say) are drawn either side of a zero mark; repeating items show progress through the current batch and how many have been made.
 
-**Category Headers**
-- Hovering over a category header will display a popup containing the category's description.
-- Clicking the pencil icon on the right side of the category will open the Edit Category Dialog.
-- Clicking the trash icon on the right side of the category will delete the category. Deleting a category marks all its items as Uncategorized.
+The clock button opens the item's **History**.
 
-**Tracked Items**
-- Clicking on the item's image will roll the item.
-- A white checkmark will be overlaid on top of the image when the item is complete. When this happens, clicking the item no longer rolls it.
-- Clicking on the item's name will expand the item's row to display the description.
-- The type column displays what kind of progression system the item uses. It'll show the skill/tool/ability name and a DC, if applicable.
-- You can edit the item's progress directly by editing the fraction right in the row.
-- The progress bar automatically fills up as the item's progress increases.
-- Clicking the pencil icon will open the Edit Tracked item dialog.
-- Clicking the trash icon will delete the item.
+## Badges
 
-# Creating & Editing Tracked Items
-The Create / Edit Tracked Item dialog is the main interface for creating and editing tracked items. There are a few variations depending on what kind of item you're working with:
+- ✓ complete · 🔒 locked
+- GMs also see: hidden from players, has requirements (red when this character doesn't meet them), rewards waiting for approval, and data that couldn't be read.
 
-![](./images/edit_item_fixed.png)
-![](./images/edit_item_macro.png)
-![](./images/edit_item_tool.png)
+# For GMs
 
-## General Information
-**ID:** This field is readonly, which means you can't enter anything into it. It's here to allow you to easily grab the item's ID if you need it for code reasons.
+## Changing progress
 
-**Name:** The name of the tracked item.
+- **−** and **+** inside the progress bar change it by 1.
+- Click the number to type: `+5` or `-2` changes it by that much, `12` sets it. Enter applies, Esc cancels.
 
-**Image:** The image that displays in the Item List on the tab. Clicking the button to the right will open a file browser so you can select something.
+## Item menu
 
-**Category:** A dropdown menu containing a list of all the actor's categories. If no custom categories have been created, "None" will be the only option.
+Click **⋮** or right-click an item's header: **Edit**, **Lock / Unlock**, **Duplicate**, **Delete**. While the sheet is in edit mode, Edit and Delete also appear as buttons on each item.
 
-**Description:** The item's description.
+## Drag and drop
 
-**Current Progress:** The item's current progress. This should be a number between 0 and the Completion Target (if no DC is set) or Required Successes (if DC has been set).
+- Drag an item to reorder it, or onto another category to move it there.
+- Drag a method to reorder it, or onto another item (even on another sheet) to move it there.
+- Hold **Ctrl** (**Cmd** on macOS) while dropping to copy instead.
+- Drop an item on another character's list or the world list to move it there (or copy it, with Ctrl/Cmd). A dialog shows what else has to come along (items it depends on), what happens to categories, and anything that wouldn't work there; nothing happens until you confirm.
 
-**Progression Type:** A dropdown menu containing each of the available types of item progression options. The option you choose will change the fields below it. Each option is described in more detail in the type-specific section.
+A copy always starts fresh: no progress, no history.
 
-## Details - Fixed Value 
-**Increase Amount:** The amount that rolling the item increases progress by.
+## Toolbar
 
-**Completion Target:** The total amount of progress needed to complete the item. This should be a number above 0.
+- **Add item** opens the item editor for a new item.
+- **Categories** edits the categories of that list.
+- **Export / Import**: save the list to a file, or add items from a file (this version's files and older ones).
+- **Unreviewed changes**: everything players have done that you haven't marked as reviewed yet, across every character and the world, plus rewards waiting for approval.
+- **Data repair**: problems found reading stored data, with fixes, and **Restore from V1** to convert a character's or the world's original data again.
+- **Add sample downtimes**: examples of every feature, on this character and the world. Safe to run twice.
 
-## Details - Skill / Ability / Tool Check
-**Skill / Ability / Tool:** The type of check that you want to roll when rolling the activity. Abilities and Skills are the standard 5e options. Options for the Tool dropdown are based on the tools in the actor's inventory. If there are no tools in the inventory, the dropdown will be empty.
+# Creating and editing items
 
-**DC:** An optional field. If you want the check to have a DC associated with it, you can enter it here. It should be a number.
+The editor walks through the item in steps; **Next** and **Back** move between them, or click any tab.
 
-**Completion Target:** The total amount of progress needed to complete the item. This should be a number above 0. Only displays if no DC is set.
+- **Presets**: start from a shape (goal, goal that locks, open-ended tally, repeating batches) or a starter (train with a tool, learn a language, craft, research, work a job, carousing, reputation, recuperate). This only fills in the form; nothing is saved until you click Create or Save.
+- **1 Basics**: name, picture, category, description, hidden from players.
+- **2 Progress**: target, minimum and maximum. Leave the target blank for an open-ended tally; a minimum below 0 lets progress go negative.
+- **3 Methods**: the ways to make progress.
+- **4 Milestones**: what happens along the way, and whether rewards need GM approval.
+- **5 Who can use it**: requirements for the whole item.
 
-**Successes Required:** The total number of successful checks that need to be made to complete the item. This should be a number above 0. Only displays if a DC is set.
+Tabs with something to fix show a red count, and saving takes you to the first one.
 
-## Details - Macro
-**Macro Name:** The name of the macro to run when the item is rolled. The bad news is that macros run by tracked items don't inherently increase their progress values unless you tell them to. The good news is that means the sky's the limit, and you can get as creative as you want with them! This wiki contains some sample macros to get you started, or you can take a look at the API page to see what functionality is available to you if you need more details on the functions available.
+## Methods
 
-**Completion Target:** The total amount of progress needed to complete the item. This should be a number above 0. Again, only updated by the macro if you include the code to do so.
+| Kind | What it does |
+| --- | --- |
+| Ability / Skill check | Rolls the check; the results table decides the progress. |
+| Tool check | Rolls with one of the character's matching tools (through its activities), or a fallback skill/ability if they have none. |
+| Fixed amount | Adds the same amount every time. |
+| Manual entry | Someone types the amount (optionally GM only). |
+| Macro | Runs a macro; it returns the amount, or a roll to look up in the results table. |
 
-# Creating & Editing Categories
-The Create / Edit Category dialog is the main interface for creating and editing categories. It looks like this:
+**Results** are a list checked top to bottom; the first that matches decides the progress: a natural 20, beating the DC by 5 or more, meeting the DC, … with "otherwise" last. Each result counts as a success, a failure, or neither.
 
-![](./images/edit_category.png)
+**Usage** limits or changes a method after a number of uses: per character, per player, or for everyone together, counting every use, successes, failures or particular results. From use N it can give a different amount, use different results, show a message and stop, or disappear.
 
-**Name:** The name of the tracked item.
+**Requirements** on a method work like the item's (below).
 
-**Description:** The item's description.
+## Milestones
 
-# The Change Log
-The Change Log displays all the progress updates that have been made to the current actor's tracked items. This can players figure out what adjustments to make if they rolled the wrong thing and didn't see how much progress was increased, and can help GM's keep track of the changes being made.
+A milestone fires when progress **reaches** a value, lands **exactly** on it, or **every** N (repeating). It can fire once, a set number of times, or every time. Its actions:
 
-Players will see a list of actions. GM's have the option to dismiss items from the log. Dismissing items doesn't revert them. It only prevents them from appearing in the log and cluttering it up.
+- **Mark complete**, **Lock** (nobody can use it until unlocked), **Announce in chat**
+- **Grant an item** or **Apply an effect** (drop the item or effect onto the field) to the character who reached it, this item's character, specific characters, or the contributors (filtered by how much they contributed). "GM picks" lets you choose who gets it when approving.
+- **Add a tracked item** (a fresh copy of another item), **Adjust another item's progress**, **Run a macro** (with an optional undo macro).
 
-**Time:** Displays the time the action was taken in UTC.
+With approval on, rewards a player triggers wait for you: approve or reject them from the chat card, the item's history or the unreviewed changes list.
 
-**User:** The user who triggered the action
+## Requirements
 
-**Item:** The action the item was taken on
+Requirements hide an item or method, disable it, or disable it with a hint, unless the character:
 
-**Action:** What got done to the item.
-* _Fixed Value_ means the item was increased by some flat value (look at the progress column to see what that value was).
-* _Roll XXX (Adv/Disadv/Normal)_ means some roll was made. It'll tell you what the roll was, and whether it was made with advantage or disadvantage
-* _Macro / External Code_ means the progress was changed via some external means. It could be a macro, or a module, or potentially a console command.
-* _Adjust Progress (+/-/=)_ shows up when the progress value was changed by altering the progress value directly from the Tracked Item List
-> NOTE: As of 0.6.0 there is no Change Log entry created when editing progress via the Edit Tracked Item dialog.
+- is proficient (or has expertise, or a bonus) in a skill, or proficient with a tool;
+- has an ability score or modifier;
+- owns an item (drop one to match it);
+- has some progress on, or reached a milestone of, another tracked item;
+- passes a macro check.
 
-**Progress Change:** Displays the old progress, the new progress, and the overall change.
+GMs always see and can use everything, with a note saying what a player would be missing.
 
-![](./images/change_log.png)
+# History and reverting
 
-# Export
-You can export the current actor's tracked items to a JSON file by clicking the export button in the Module Controls bar. This will open a window that lets you choose where to save the file and what to name it. This is handy for backing up your data, troubleshooting, and transferring activities between actors.
+The **History** window lists every change: who, when, what was rolled and what it was worth. Filter it by kind, method, result or person; the **Contributions** tab totals it up per person, method and result. Players see their own contributions only. GMs can add notes and mark entries reviewed.
 
-# Import
-> WARNING: Importing items is meant to be a troubleshooting/data restoration tool. You use this feature at your own risk, and I take no responsibility for any lost data due to misunderstandings or accidents. As of 0.6.0, there are no checks in place to make sure the file you've selected is a valid JSON file containing objects that look like tracked items. Importing a file that doesn't contain tracked items and ONLY tracked items could break some stuff. Be careful what you import. If you do break something, I can help you fix it - but there's no guarantee that I can get your old data back. File a bug report and attach a copy of the file you imported so I can take a look.
+**Revert** undoes the latest change and everything it caused (milestones, granted items, effects, items it added), and it's on the latest entry in the history. Only the latest change can be reverted; revert again to go further back. If something can't be undone (a macro without an undo macro, an added item that already has progress of its own), the revert is blocked and the history says why.
 
-You can also import tracked items from a JSON file to the current actor by clicking the import button in the Module Controls bar. This will open a window that lets you select the file you'd like to import. After you select your file, you'll be asked if you want to overwrite the actor's current items, or combine the new import with the current items. Overwriting will completely replace all current tracked items with the contents of your chosen JSON file - you won't be able to get them back. Combining will add everything in the JSON file to the current list of tracked items.
+# Players
 
-When merging, sometimes you'll get a notification that says it detected duplicate entries. Usually this message pops up when an imported item has the same ID as an existing one. If this is the case, the imported item will be assigned a new ID and added to the list as normal. You just get alerted so you know it happened.
+Players see their own characters' items and the world items they qualify for, use methods, and see their own history. Creating and editing items is for GMs.
+
+# Settings
+
+- **GM only mode**: hide the tab from players and whisper everything to the GM.
+- **Default completion target**: the target new items start with.
+- **Announce completion for**: whose milestones are announced to everyone by default (player characters, NPCs, both or none).
+- **Milestone actions need GM approval**: the default for items set to "world default".
+- **Debug**: extra logging.

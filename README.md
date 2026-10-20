@@ -39,79 +39,36 @@ This project was created as a continuation of the crash project [Crash's Trackin
 
 [Downtime Dnd5e](https://github.com/laquasicinque/foundryvtt-downtime-dnd5e) This project was created as a continuation of the crash project [Crash's Tracking & Training (formerly known as Crash's Downtime Tracking)](https://github.com/crash1115/5e-training)  but with the code rewritten to follow "standard" development rules like use the module id as prefix for the css rule, the standard folder structure ecc.
 
+## Features
+
+- **Tracked items** on any character or NPC, or shared by the whole world: progress towards a target, an open-ended tally, a reputation that can go negative, or a repeating activity (a batch every N, forever).
+- **Ways to progress** ("methods"): ability, skill and tool checks (using the tool's own activities), a fixed amount, an amount someone enters, or a macro. Results tables decide how much a roll is worth (natural 20s, beating the DC by 5, …), and usage rules can limit or reduce a method after a number of uses.
+- **Milestones** along the way: mark complete, lock, announce in chat, grant items or effects, add another tracked item, adjust another item's progress, or run a macro. Rewards can wait for GM approval, and the GM can pick who gets them.
+- **Requirements**: hide or disable an item or method unless the character has a skill, a tool proficiency, an item, a score, or progress elsewhere.
+- **History** of every change with who made it, a contributions breakdown, reverting the latest change (undoing what it caused), and a GM review list.
+- **Chat cards** for each use, with the roll attached and live updates for approvals and reverts.
+- **Starters** for common downtime activities, drag and drop to reorder, move or copy between characters and the world, import/export, and a data repair tool.
+
+Existing data from earlier versions is converted automatically the first time a GM logs in; the old data is kept untouched as a backup.
+
 ## How To Use
 
-Check out the [wiki](/wiki/Home.md) for instructions, screenshots, sample macros, compatibility info, API documentation, and more!
-
-**Note on the execution of the macro:** executes Macro command, giving speaker, actor, token, character, and event constants. This is recognized as the macro itself. Pass an event as the first argument. Is the same concept used from [Item Macro](https://github.com/Foundry-Workshop/Item-Macro/), but without the item, also the main reference is not the item, but the actor, we used the actor set as character by default or the first owned actor by the user, same concept of [Item Piles](https://github.com/fantasycalendar/FoundryVTT-ItemPiles). The macro is launched under as a asynchronus call so  `await ` command are good.
-
-So when you set up to run a macro with this module these arguments are already "setted":`
-- **speaker**: The chat message speaker referenced to the actor.
-- **actor**: The actor reference.
-- **token**: The token (if present on the current scene), referenced to the actor.
-- **character**: The character is the actor reference to the one setted to the specific player (cannot be the same of the actor reference).
-- **event**: The javascript event passed from the module to the macro.
-- **args**: Additional arguments passed from the module to the macro.
-- **activity**: Information regarding the downtime activity being usd
+Check out the [wiki](/wiki/Home.md) for instructions, sample macros, compatibility info and API documentation. Macros used by methods, requirements and milestones get the acting `actor` and a `downtime` object; see [API → Macros](./wiki/API.md#macros).
 
 ## Api
 
-All informations about the api can be found here [API](./wiki/API.md)
+All information about the API can be found here: [API](./wiki/API.md)
 
 # Build
 
-## Install all packages
-
 ```bash
-vp install
-```
-
-### dev
-
-`dev` will let you develop you own code with hot reloading on the browser
-
-```bash
-vp dev
-```
-
-## Vite+ scripts
-
-### build
-
-`build` will build and set up a symlink between `dist` and your `dataPath`.
-
-```bash
-vp run build
-```
-
-### build-watch
-
-`build-watch` will build and watch for changes, rebuilding automatically.
-
-```bash
-vp run build:watch
-```
-
-### format
-
-`format` checks formatting with Vite+.
-
-```bash
-vp fmt
-```
-
-### lint and lint:fix
-
-`lint` checks code with Vite+.
-
-```bash
-vp lint
-```
-
-`lint:fix` runs the Vite+ linter with fixes enabled.
-
-```bash
-vp run lint:fix
+vp install          # install packages
+vp dev              # dev server with hot reloading, proxied to Foundry on :30000
+vp run build        # clean build into dist/downtime-dnd5e
+vp run build:watch  # rebuild on change
+vp check            # format, lint and type check
+vp test             # unit tests (the model is pure and runs without Foundry)
+vp run check:svelte # type check the Svelte components
 ```
 
 ## [Changelog](./changelog.md)
