@@ -10,34 +10,17 @@
     "packageManager": "npm@12.0.2",
     "author": "",
     "contributors": [],
-    "imports": {
-        "#runtime/*": "@typhonjs-fvtt/runtime/*",
-        "#standard/*": "@typhonjs-fvtt/svelte-standard/*"
-    },
-    "dependencies": {
-        "@fortawesome/fontawesome-svg-core": "^7.0.0",
-        "@fortawesome/free-solid-svg-icons": "^7.0.0",
-        "@fortawesome/react-fontawesome": "^0.2.3",
-        "@rollup/plugin-node-resolve": "^15.3.1",
-        "it-al": "^1.3.11"
-    },
     "devDependencies": {
-        "@foundryvtt/foundryvtt-cli": "^1.1.0",
         "@sveltejs/vite-plugin-svelte": "^6.1.2",
         "@tsconfig/svelte": "^5.0.8",
-        "dnd5e": "github:adriangaro/dnd5e-types",
-        "fancy-log": "^2.0.0",
-        "fvtt-types": "github:League-of-Foundry-Developers/foundry-vtt-types#main",
-        "pixi.js": "^8.11.0",
-        "sass": "^1.89.2",
+        "@types/node": "^24.19.2",
+        "@typescript/native": "npm:typescript@^7.0.2",
         "svelte": "^5.57.0",
-        "svelte-check": "^4.7.6",
-        "tidy5e-sheet": "github:kgar/foundry-vtt-tidy-5e-sheets",
-        "typescript": "^7.0.2",
+        "svelte-check": "^4.7.7",
+        "typescript": "~6.0.3",
         "vite": "npm:@voidzero-dev/vite-plus-core@0.3.0",
         "vite-plugin-clean": "^2.0.1",
         "vite-plugin-static-copy": "^3.1.1",
-        "yargs": "^18.0.0",
         "vite-plus": "0.3.0"
     },
     "browserslist": [
@@ -48,15 +31,12 @@
         "clean": "node ./utils/clean.mjs",
         "build": "vp run clean && vp build",
         "build:watch": "vp run clean && vp build --watch --mode development",
-        "build:watchWithDb": "vp run clean && vp run build:db && vp build --watch --mode development",
         "dev": "vp dev",
-        "build:clean": "node ./utils/packs.mjs package clean",
-        "build:db": "node ./utils/packs.mjs package pack",
-        "build:json": "node ./utils/packs.mjs package unpack",
         "format": "vp fmt",
         "lint": "vp lint",
         "lint:fix": "vp lint --fix",
         "check": "vp check",
+        "check:svelte": "svelte-check --tsconfig ./tsconfig.json --tsgo",
         "prepare": "vp config"
     },
     "devEngines": {
@@ -69,5 +49,8 @@
     "overrides": {
         "vite": "npm:@voidzero-dev/vite-plus-core@0.3.0",
         "vitest": "4.1.11"
+    },
+    "dependencies": {
+        "it-al": "^1.3.11"
     }
 }

@@ -1,0 +1,124 @@
+/* Combined method-use card (rudimentary; the design track replaces it). */
+.downtime-dnd5e-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+.downtime-dnd5e-card .dt-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.downtime-dnd5e-card .dt-header img {
+    width: 36px;
+    height: 36px;
+    border: none;
+    flex: none;
+}
+.downtime-dnd5e-card .dt-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    border: none;
+}
+.downtime-dnd5e-card .dt-sub,
+.downtime-dnd5e-card .dt-muted {
+    font-size: 0.8rem;
+    opacity: 0.75;
+}
+.downtime-dnd5e-card .dt-live {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+.downtime-dnd5e-card .dt-result {
+    font-size: 0.9rem;
+}
+.downtime-dnd5e-card .dt-band.success {
+    color: var(--color-level-success, #2a7a2a);
+}
+.downtime-dnd5e-card .dt-band.failure {
+    color: var(--color-level-error, #a22);
+}
+.downtime-dnd5e-card .dt-bar {
+    height: 6px;
+    border-radius: 3px;
+    background: rgb(0 0 0 / 0.15);
+    overflow: hidden;
+    margin-top: 0.2rem;
+}
+.downtime-dnd5e-card .dt-bar > span {
+    display: block;
+    height: 100%;
+    background: var(--color-level-info, #3a6ea5);
+}
+.downtime-dnd5e-card .dt-delta {
+    opacity: 0.8;
+}
+.downtime-dnd5e-card .dt-usage {
+    font-size: 0.8rem;
+}
+.downtime-dnd5e-card .dt-usage.blocked {
+    color: var(--color-level-warning, #c80);
+}
+.downtime-dnd5e-card .dt-milestone {
+    font-size: 0.85rem;
+    border-left: 3px solid var(--color-level-info, #3a6ea5);
+    padding-left: 0.4rem;
+}
+.downtime-dnd5e-card .dt-milestone.reverted {
+    opacity: 0.6;
+    border-left-color: rgb(0 0 0 / 0.3);
+}
+.downtime-dnd5e-card .dt-milestone ul {
+    margin: 0.15rem 0 0;
+    padding-left: 1rem;
+}
+.downtime-dnd5e-card .dt-action {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem;
+}
+.downtime-dnd5e-card .dt-status {
+    font-size: 0.75rem;
+    opacity: 0.75;
+}
+.downtime-dnd5e-card .dt-action.status-pending_approval .dt-status {
+    color: var(--color-level-warning, #c80);
+    opacity: 1;
+}
+.downtime-dnd5e-card .dt-action.status-failed .dt-status,
+.downtime-dnd5e-card .dt-action.status-rejected .dt-status {
+    color: var(--color-level-error, #a22);
+    opacity: 1;
+}
+.downtime-dnd5e-card .dt-approve {
+    display: inline-flex;
+    gap: 0.2rem;
+    margin-left: auto;
+}
+.downtime-dnd5e-card button {
+    width: auto;
+    line-height: 1.4;
+    padding: 0 0.4rem;
+    font-size: 0.75rem;
+}
+.downtime-dnd5e-card .dt-gm {
+    display: flex;
+    gap: 0.25rem;
+    justify-content: flex-end;
+}
+.downtime-dnd5e-card .dt-note {
+    font-size: 0.8rem;
+    font-style: italic;
+}
+.downtime-dnd5e-card .dt-reverted {
+    font-weight: bold;
+    color: var(--color-level-warning, #c80);
+}
+.downtime-dnd5e-card.is-reverted .dt-roll,
+.downtime-dnd5e-card.is-reverted .dt-result,
+.downtime-dnd5e-card.is-reverted .dt-progress {
+    text-decoration: line-through;
+    opacity: 0.6;
+}

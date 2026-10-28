@@ -1,3 +1,29 @@
+### Unreleased: V3 (open beta)
+
+A rewrite of the module. Requires Foundry v14 and dnd5e 6.0 or later.
+
+**Your data**
+- Existing tracked items, categories and history (actors, unlinked tokens and the world) are converted the first time a GM logs in. The original data is left untouched as a backup; the GM's **Data repair** tool can convert it again ("Restore from V1").
+- World downtimes now live in a hidden journal entry ("Downtime") instead of a world setting.
+
+**New**
+- Several ways to progress per tracked item (methods): ability, skill and tool checks, fixed amounts, entered amounts and macros. Tool checks use the tool's own activities; other modules can add support for their activity types.
+- Results tables (natural 20s, margins over the DC…), usage limits per method, and requirements that hide or disable items and methods.
+- Milestones with actions: complete, lock, announce, grant an item, apply an effect, add another tracked item, adjust another item, run a macro. Optional GM approval, and the GM can pick recipients from the contributors. Repeating milestones (a batch every N).
+- A full history per item, contributions breakdown, revert of the latest change (including what it caused), and an "Unreviewed changes" list for the GM.
+- One chat card per use, with the roll attached; approvals and reverts update it in place.
+- A step-by-step item editor with presets and starter activities; drag and drop to reorder, move methods between items, and move or copy (Ctrl/Cmd) items between characters and the world; import/export (V1 files too); a data repair tool.
+
+**Changed**
+- Creating and editing tracked items, methods, milestones and categories is GM-only. The "GM only edit mode" setting is gone: players use methods but no longer edit.
+- "Default completion target" now defaults to 10 (was 300) and is the starting target of new items.
+- Removed settings: show import button, enable tab for PCs / NPCs, tab name, extra sheet width, and the reset and config menus. Import/export and moving items between actors and the world are in the Downtime tab itself.
+
+**API**
+- `game.modules.get("downtime-dnd5e").api` is new and id-based (`getItems`, `getItem`, `useMethod`, `adjust`, `set`, `revert`, `transfer`, `importData`, …), returning read-only objects. See the wiki.
+- The old functions (`updateActivity`, `getActivities`, `getWorldActivity`, …) still work on the new data, find items by name, and log a deprecation warning. `getCategories(actor)` now returns category objects (same fields).
+- Macros run by methods, requirements and milestones get `actor` and a `downtime` object instead of the old arguments.
+
 ### 13.0.0 [BETA]
 
 - Full upgrade for v13 ty to @laquasicinque for https://github.com/p4535992/foundryvtt-downtime-dnd5e/pull/30
