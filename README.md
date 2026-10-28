@@ -71,6 +71,8 @@ vp test             # unit tests (the model is pure and runs without Foundry)
 vp run check:svelte # type check the Svelte components
 ```
 
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for how the code is organised, the compat layer, and translations.
+
 ## [Changelog](./changelog.md)
 
 ## Issues
